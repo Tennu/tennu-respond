@@ -74,41 +74,82 @@ function add(newTriggers, response, chance, nickname) {
     });
 }
 
-function removeResponse(ID) {
-    return this.knex('respond')
-        .where('ID', ID)
-        .del();
+function remove(type, ID) {
+    var self = this;
+    if (type === 'respond') {
+        return self.knex('trigger')
+            .where('RespondID', ID)
+            .delete()
+            .then(function() {
+                return self.knex('respond')
+                    .where('ID', ID)
+                    .delete();
+            }).then(function() {
+                return _.remove(self.triggers, {
+                    'RespondID': ID
+                });
+            });
+    }
+    if (type === 'trigger') {
+        return self.knex
+            .select('RespondID')
+            .table('trigger')
+            .where('ID', ID)
+            .then(function(respondIDs) {
+                if (respondIDs.length === 1) {
+                    // Delete respond
+                    return self.knex('respond')
+                        .where('ID', respondIDs[0].RespondID)
+                        .delete();
+                }
+            })
+            .then(function(deletedTriggers) {
+                return self.knex('trigger')
+                    .where('ID', ID)
+                    .delete();
+            })
+            .then(function(deletedResponses) {
+                var removed = _.remove(self.triggers, {
+                    'ID': ID
+                });
+                console.log(ID);
+                console.log(removed);
+                console.log(self.triggers);
+                return removed
+            });
+    }
 }
 
-function removeTrigger(ID) {
-    return this.knex('trigger')
-        .where('ID', ID)
-        .del();
+function details(type, ID) {
+    return this.knex
+        .select()
+        .table(type)
+        .where('ID', ID);
 }
 
 function search(query, page, resultsPerPage) {
     var self = this;
 
-    return self.knex
-        .select('*')
-        .from('respond')
-        .leftOuterJoin('trigger', 'respond.ID', 'trigger.RespondID')
-        .unionAll(function() {
-            self.knex
-                .select('*')
-                .from('trigger')
-                .leftOuterJoin('trigger', 'respond.ID', 'trigger.RespondID')
-        }).whereNull('ID')
-        .limit(resultsPerPage)
-        .offset(page);;
+    // return self.knex
+    //     .select('*')
+    //     .from('respond')
+    //     .leftOuterJoin('trigger', 'respond.ID', 'trigger.RespondID')
+    //     .unionAll(function() {
+    //         self.knex
+    //             .select('*')
+    //             .from('trigger')
+    //             .leftOuterJoin('trigger', 'respond.ID', 'trigger.RespondID')
+    //     }).whereNull('ID')
+    //     .limit(resultsPerPage)
+    //     .offset(page);;
 
 
-    return this.knex('respond')
-        .join('trigger', 'respond.ID', 'trigger.RespondID')
-        .andWhere('Response', query)
-        .orWhere('trigger', query)
-        .limit(resultsPerPage)
-        .offset(page);
+    // return this.knex('respond')
+    //     .join('trigger', 'respond.ID', 'trigger.RespondID')
+    //     .andWhere('Response', query)
+    //     .orWhere('trigger', query)
+    //     .limit(resultsPerPage)
+    //     .offset(page);
 }
 
 function list(page, resultsPerPage) {
@@ -116,18 +157,45 @@ function list(page, resultsPerPage) {
 }
 
 function respond(knexContext, client) {
+    var bookshelf = require('bookshelf')(knexContext);
+
+    var Respond = bookshelf.Model.extend({
+        tableName: 'respond',
+        triggers: function() {
+            return this.hasMany(Trigger);
+        }
+    });
+
+    var Trigger = bookshelf.Model.extend({
+        tableName: 'trigger',
+        respond: function() {
+            return this.belongsTo(Respond);
+        }
+    })
+
     return Promise.try(function() {
+        Respond.fetchAll().then(function(respond) {
+
+            console.log(respond.related('triggers').toJSON());
+
+        })
         return knexContext.select().table('trigger');
     }).then(function(dbTriggers) {
         client._logger.notice(format('tennu-response: loaded %s triggers(s)', dbTriggers.length));
         return {
             client: client,
             knex: knexContext,
+            
+            // Bookshelf stuff
+            bookshelf: bookshelf,
+            Respond: Respond,
+            Trigger: Trigger,
+            
             triggers: dbTriggers,
             emit: emit,
             add: add,
-            removeResponse: removeResponse,
-            removeTrigger: removeTrigger,
+            details: details,
+            remove: remove,
             // edit: edit,
             // list: list,
             search: search,

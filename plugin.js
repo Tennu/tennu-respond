@@ -1,4 +1,5 @@
 var parseArgs = require("minimist");
+var moment = require('moment');
 var format = require('util').format;
 var Promise = require('bluebird');
 var clamp = require('clamp');
@@ -13,6 +14,16 @@ const helps = {
         "Modifiers: ",
         "-c=chance : must be between 0.000 and 1.000"
     ],
+    "remove": [
+        "{{!}}response remove <type> <ID>",
+        "Removes either a trigger or a respond.",
+        "CAUTION:",
+        "Removing a respond removes ALL triggers. Likewise, removing the only trigger for a respond, removes the respond.",
+    ],    
+    "details": [
+        "{{!}}response remove <type> <ID>",
+        "Shows metadata on the a respond or trigger.",
+    ],      
 };
 
 const requiresAdminHelp = 'This command requires administrator proviledges.';
@@ -48,6 +59,35 @@ var TennuSay = {
             throw Error("respond is missing some or all of its configuration.");
         }
 
+        function respond() {
+            return function(IRCMessage) {
+                return isAdmin(IRCMessage.hostmask).then(function(isadmin) {
+                    // isadmin will be "undefined" if cooldown system is enabled
+                    // isadmin will be true/false if cooldown system is disabled
+                    if (typeof(isadmin) !== "undefined" && isadmin === false) {
+                        throw new Error(requiresAdminHelp);
+                    }
+                }).then(function() {
+                    switch (IRCMessage.args[0]) {
+                        case 'add':
+                            return add(IRCMessage);
+                        case 'search':
+                            return search(IRCMessage);
+                        case 'details':
+                            return details(IRCMessage);
+                        case 'remove':
+                            return remove(IRCMessage);
+                        default:
+                            return {
+                                intent: 'notice',
+                                query: true,
+                                message: ['Subcommand for respond not found. See !help respond and check your PMs.']
+                            };
+                    }
+                }).catch(adminFail);
+            };
+        }
+
         function emitResponse() {
             return function(IRCMessage) {
                 return dbResponsePromise.then(function(respond) {
@@ -62,41 +102,91 @@ var TennuSay = {
             };
         }
 
-        function respond() {
-            return function(IRCMessage) {
-                return isAdmin(IRCMessage.hostmask).then(function(isadmin) {
-                    // isadmin will be "undefined" if cooldown system is enabled
-                    // isadmin will be true/false if cooldown system is disabled
-                    if (typeof(isadmin) !== "undefined" && isadmin === false) {
-                        throw new Error(requiresAdminHelp);
-                    }
-                }).then(function() {
-                    switch (IRCMessage.args[0]) {
-                        case 'add':
-                            return add(IRCMessage);
-                            break;
-                        case 'search':
-                            return search(IRCMessage);
-                            break;
-                        default:
-                            return {
-                                intent: 'notice',
-                                query: true,
-                                message: ['Subcommand for respond not found. See !help respond and check your PMs.']
-                            };
-                    }
-                }).catch(adminFail);
-            };
+        function details(IRCMessage) {
+            var type = IRCMessage.args[1];
+            if (['respond', 'trigger'].indexOf(type) === -1) {
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: ['Subcommand for respond delete not found. See !help respond delete and check your PMs/notices.']
+                };
+            }
+
+            // validate ID
+            var ID = parseInt(IRCMessage.args[2], 10);
+            if (isNaN(ID)) {
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: 'ID is not a number.'
+                };
+            }
+
+            return dbResponsePromise.then(function(respond) {
+                return respond.details(type, ID);
+            }).then(function(details) {
+                if (details.length === 0) {
+                    return {
+                        intent: 'notice',
+                        query: true,
+                        message: format('Couldnt find anything for "%s" ID=%s', type, ID)
+                    };
+                }
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: format('%s ID %s "%s" added by %s on %s modified on %s', type, ID, details.Response, details.CreatedBy, moment(details.CreatedOn), moment(details.UpdatedOn))
+                };
+            });
         }
 
-        function search (IRCMessage) {
+        function remove(IRCMessage) {
+            var type = IRCMessage.args[1];
+            if (['respond', 'trigger'].indexOf(type) === -1) {
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: ['Subcommand for respond delete not found. See !help respond delete and check your PMs/notices.']
+                };
+            }
+
+            // validate ID
+            var ID = parseInt(IRCMessage.args[2], 10);
+            if (isNaN(ID)) {
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: 'ID is not a number.'
+                };
+            }
+
+            return dbResponsePromise.then(function(respond) {
+                return respond.remove(type, ID);
+            }).then(function(triggersRemoved) {
+                console.log(triggersRemoved);
+                if (triggersRemoved.length === 0) {
+                    return {
+                        intent: 'notice',
+                        query: true,
+                        message: format('Couldnt find anything to delete for "%s" ID=%s', type, ID)
+                    };
+                }                
+                return {
+                    intent: 'notice',
+                    query: true,
+                    message: format('%s Deleted. Resulted in these triggers from being removed: %s', type, _.pluck(triggersRemoved, 'Trigger').join(', '))
+                };
+            });
+        }
+
+        function search(IRCMessage) {
             var sayArgs = parseArgs(IRCMessage.args, respondListSearchArgs);
             var page = sayArgs.page || 0;
-            
+
             return dbResponsePromise.then(function(respond) {
                 return respond.search(sayArgs._.join(' '), page, aSayConfig.defaultChance);
-            }).then(function(results){
-                // Todo: heavy formatting
+            }).then(function(results) {
+                // Todo: formatting
                 console.log(results);
             });
         }
@@ -126,7 +216,7 @@ var TennuSay = {
 
             return dbResponsePromise.then(function(respond) {
                 return respond.add(targets, response, chance, IRCMessage.nickname);
-            }).then(function(amountInserted) {
+            }).then(function() {
                 return {
                     intent: 'notice',
                     query: true,
@@ -165,8 +255,8 @@ var TennuSay = {
                         "!respond add [-c=.3] <ID> <new_text>",
                         "!respond edit <ID> <new_text>",
                         "!respond edit trigger <ID> <new_text>",
-                        "!respond delete <ID>",
-                        "!respond delete trigger <ID>",
+                        "!respond remove <type> <ID>",
+                        "!respond details <type> <ID>",
                         "!respond search <query>",
                         "!respond list",
                     ],

@@ -8,19 +8,22 @@
     "url": "https://github.com/tennu/tennu-respond"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "postversion": "git push && git push --tags && npm publish"
   },
   "author": "Victorio Berra",
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.0.6",
+    "bookshelf": "^0.9.1",
     "clamp": "git+https://github.com/LordWingZero/clamp.git",
     "error": "^7.0.2",
     "lodash": "^3.10.1",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "moment": "^2.10.6"
   },
   "devDependencies": {
-    "mocha": "^2.3.3"
+    "mocha": "^2.3.3",
+    "tennu-dbcore": "^1.0.6"
   }
 }

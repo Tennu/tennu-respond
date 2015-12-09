@@ -16,8 +16,13 @@ var RespondResponseNullOrEmptyError = TypedError({
     message: 'Response cannot be null or empty.',
 });
 
+// var RespondResponseOrTriggerNaNError = TypedError({
+//     type: 'respond.responsortriggernan',
+//     message: 'ID is not a number.',
+// });
+
 module.exports = {
     RespondNoTriggerError: RespondNoTriggerError,
     RespondTriggerNullOrEmptyError: RespondTriggerNullOrEmptyError,
-    RespondResponseNullOrEmptyError: RespondResponseNullOrEmptyError
+    RespondResponseNullOrEmptyError: RespondResponseNullOrEmptyError,
 };
