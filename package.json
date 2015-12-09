@@ -1,0 +1,26 @@
+{
+  "name": "tennu-respond",
+  "version": "1.0.0",
+  "description": "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
+  "main": "plugin.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tennu/tennu-respond"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postversion": "git push && git push --tags && npm publish"
+  },
+  "author": "Victorio Berra",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.0.6",
+    "clamp": "git+https://github.com/LordWingZero/clamp.git",
+    "error": "^7.0.2",
+    "lodash": "^3.10.1",
+    "minimist": "^1.2.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.3"
+  }
+}
