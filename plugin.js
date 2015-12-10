@@ -8,6 +8,16 @@ var _ = require('lodash');
 // Will not change if 2 instances of tennu launched
 // Move this to JSON
 const helps = {
+    "global": [
+        "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
+        "!respond add [-c=.3] <ID> <new_text>",
+        "!respond edit <ID> <new_text>",
+        "!respond edit trigger <ID> <new_text>",
+        "!respond remove <type> <ID>",
+        "!respond details <type> <ID>",
+        "!respond search <query>",
+        "!respond list",
+    ],
     "add": [
         "{{!}}response [-c=chance] <target>[/<target2>/<target3>]/<response>",
         "Sets a trigger word(s) with a chance of responding with a phrase.",
@@ -19,11 +29,11 @@ const helps = {
         "Removes either a trigger or a respond.",
         "CAUTION:",
         "Removing a respond removes ALL triggers. Likewise, removing the only trigger for a respond, removes the respond.",
-    ],    
+    ],
     "details": [
         "{{!}}response remove <type> <ID>",
         "Shows metadata on the a respond or trigger.",
-    ],      
+    ],
 };
 
 const requiresAdminHelp = 'This command requires administrator proviledges.';
@@ -104,7 +114,7 @@ var TennuSay = {
 
         function details(IRCMessage) {
             var type = IRCMessage.args[1];
-            if (['respond', 'trigger'].indexOf(type) === -1) {
+            if (['response', 'trigger'].indexOf(type) === -1) {
                 return {
                     intent: 'notice',
                     query: true,
@@ -142,7 +152,7 @@ var TennuSay = {
 
         function remove(IRCMessage) {
             var type = IRCMessage.args[1];
-            if (['respond', 'trigger'].indexOf(type) === -1) {
+            if (['response', 'trigger'].indexOf(type) === -1) {
                 return {
                     intent: 'notice',
                     query: true,
@@ -170,7 +180,7 @@ var TennuSay = {
                         query: true,
                         message: format('Couldnt find anything to delete for "%s" ID=%s', type, ID)
                     };
-                }                
+                }
                 return {
                     intent: 'notice',
                     query: true,
@@ -250,16 +260,7 @@ var TennuSay = {
             commands: ["respond"],
             help: {
                 "respond": {
-                    "*": [
-                        "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
-                        "!respond add [-c=.3] <ID> <new_text>",
-                        "!respond edit <ID> <new_text>",
-                        "!respond edit trigger <ID> <new_text>",
-                        "!respond remove <type> <ID>",
-                        "!respond details <type> <ID>",
-                        "!respond search <query>",
-                        "!respond list",
-                    ],
+                    "*": helps.global,
                     "add": helps.add
                 }
             }
