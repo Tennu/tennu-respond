@@ -27,8 +27,8 @@ var masterNickname = 'TheCreator';
 describe('Respond', function() {
 
     // CLear and seed
-    var be = (require('./before-each')(dbResponsePromise));
-    beforeEach(be);
+    var clearAndSeed = (require('./before-each')(dbResponsePromise));
+    beforeEach(clearAndSeed);
 
     describe('add', function() {
         it('Should insert a response and triggers into the database', function(done) {
@@ -41,6 +41,16 @@ describe('Respond', function() {
                     });
             });
         });
+        it('Empty chance should throw', function(done) {
+            dbResponsePromise.then(function(respond) {
+                respond.add(['a', 'b'], 'c', null, 'test_user')
+                    .then(assert.fail)
+                    .catch(function(e) {
+                        assert.equal(_.any(e.errors.trigger.errors, {rule: 'required'}), true);
+                        done();
+                    });
+            });
+        });        
         it('Empty trigger should throw when missing trigger value', function(done) {
             dbResponsePromise.then(function(respond) {
                 respond.add(['', 'b'], 'c', 0.03, 'test_user')
