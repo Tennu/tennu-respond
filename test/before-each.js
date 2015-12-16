@@ -2,10 +2,21 @@ function be(dbResponsePromise) {
     return function(done) {
         this.timeout(5000);
         return dbResponsePromise.then(function(respond) {
-            // Clear
-            return respond.knex('response').delete().then(function() {
-                    return respond.knex('trigger').delete();
-                }).then(function() {
+
+            // Clear Cache
+            respond.triggerCache.clear();
+
+            // Clear Database
+            return new respond.Trigger().fetchAll().then(function(allTriggers) {
+                    return allTriggers.invokeThen('destroy');
+                })
+                .then(function() {
+                    return new respond.Response().fetchAll();
+                })
+                .then(function(allRespnses) {
+                    return allRespnses.invokeThen('destroy');
+                })
+                .then(function() {
                     return new respond.Responses([{
                         response: 'response one.',
                         created_by: 'TestUser'
@@ -47,7 +58,7 @@ function be(dbResponsePromise) {
                                 created_by: 'TestUser2'
                             }]).invokeThen('save');
                         }).then(function() {
-                            return responses[1].related('triggers').create({
+                            return responses[2].related('triggers').create({
                                 trigger: 'trigger six',
                                 chance: 0.01,
                                 created_by: 'TestUser2'
@@ -61,8 +72,5 @@ function be(dbResponsePromise) {
     };
 
 }
-
-
-
 
 module.exports = be;
