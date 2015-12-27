@@ -4,7 +4,7 @@ function be(dbResponsePromise) {
         return dbResponsePromise.then(function(respond) {
 
             // Clear Cache
-            respond.triggerCache.clear();
+            respond.cache.clear();
 
             // Clear Database
             return new respond.Trigger().fetchAll().then(function(allTriggers) {
@@ -18,13 +18,13 @@ function be(dbResponsePromise) {
                 })
                 .then(function() {
                     return new respond.Responses([{
-                        response: 'response one.',
+                        response: 'response one',
                         created_by: 'TestUser'
                     }, {
-                        response: 'response two.',
+                        response: 'response two',
                         created_by: 'TestUser'
                     }, {
-                        response: 'response three.',
+                        response: 'response three',
                         created_by: 'TestUser'
                     }]).invokeThen('save');
                 })
@@ -50,18 +50,18 @@ function be(dbResponsePromise) {
                                 response_id: responses[1].id,
                                 trigger: 'trigger four',
                                 chance: 0.01,
-                                created_by: 'TestUser2'
+                                created_by: 'TestUser3'
                             }, {
                                 response_id: responses[1].id,
                                 trigger: 'trigger five',
                                 chance: 1.00,
-                                created_by: 'TestUser2'
+                                created_by: 'TestUser3'
                             }]).invokeThen('save');
                         }).then(function() {
                             return responses[2].related('triggers').create({
                                 trigger: 'trigger six',
                                 chance: 0.01,
-                                created_by: 'TestUser2'
+                                created_by: 'TestUser4'
                             });
                         });
                 })

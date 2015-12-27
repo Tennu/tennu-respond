@@ -11,6 +11,9 @@ function logger() {
 
 function config(value) {
     var cfg = {
+        "respond": {
+            "defaultChance": 0.3
+        },
         "database": {
             "client": "sqlite3",
             "debug": false,

@@ -4,6 +4,7 @@ var format = require('util').format;
 var Promise = require('bluebird');
 var clamp = require('clamp');
 var _ = require('lodash');
+var haste = require('./lib/haste');
 
 // Will not change if 2 instances of tennu launched
 // Move this to JSON
@@ -11,28 +12,31 @@ const helps = {
     "global": [
         "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
         "!respond add [-c=.3] <ID> <new_text>",
-        "!respond edit <ID> <new_text>",
-        "!respond edit trigger <ID> <new_text>",
+        "!respond edit <type> <ID> <new_text>",
         "!respond remove <type> <ID>",
-        "!respond details <type> <ID>",
-        "!respond search <query>",
         "!respond list",
     ],
     "add": [
-        "{{!}}response [-c=chance] <target>[/<target2>/<target3>]/<response>",
+        "{{!}}respond [-c=chance] <target>[/<target2>/<target3>]/<response>",
         "Sets a trigger word(s) with a chance of responding with a phrase.",
         "Modifiers: ",
         "-c=chance : must be between 0.000 and 1.000"
     ],
+    // How to handle editing chance?
+    "edit": [
+        "{{!}}respond edit <type> <ID> <new_text>",
+        "Modifys the text and chance for the response or trigger.",
+        "Modifiers: ",
+        "-c=chance : must be between 0.000 and 1.000"
+    ],    
     "remove": [
-        "{{!}}response remove <type> <ID>",
+        "{{!}}respond remove <type> <ID>",
         "Removes either a trigger or a respond.",
         "CAUTION:",
         "Removing a respond removes ALL triggers. Likewise, removing the only trigger for a respond, removes the respond.",
     ],
-    "details": [
-        "{{!}}response remove <type> <ID>",
-        "Shows metadata on the a respond or trigger.",
+    "list": [
+        "{{!}}returns a haste url containing all responses and triggers in DB",
     ],
 };
 
@@ -44,12 +48,6 @@ const respondAddArgs = {
     }
 };
 
-const respondListSearchArgs = {
-    alias: {
-        'p': 'page'
-    }
-};
-
 var TennuSay = {
     requiresRoles: ["admin", "dbcore"],
     init: function(client, imports) {
@@ -58,14 +56,14 @@ var TennuSay = {
 
         const dbResponsePromise = imports.dbcore.then(function(knex) {
             // response.js will return a promise as it fetches all responses
-            return require('./respond')(knex, client).then(function(respond) {
+            return require('./lib/respond')(knex, client._logger.notice, client._logger.debug).then(function(respond) {
                 return respond;
             });
         });
 
         var aSayConfig = client.config("respond");
 
-        if (!aSayConfig || !aSayConfig.hasOwnProperty("defaultChance") || !aSayConfig.hasOwnProperty("resultsPerPage")) {
+        if (!aSayConfig || !aSayConfig.hasOwnProperty("defaultChance")) {
             throw Error("respond is missing some or all of its configuration.");
         }
 
@@ -101,8 +99,8 @@ var TennuSay = {
         function emitResponse() {
             return function(IRCMessage) {
                 return dbResponsePromise.then(function(respond) {
-                    return respond.emit(IRCMessage.message).then(function(responses) {
-                        return _.pluck(responses, 'Response');
+                    return respond.tryEmit(IRCMessage.message).then(function(responses) {
+                        return _.pluck(responses, 'response');
                     }).catch(function(err) {
                         if (err.type !== 'respond.notrigger') {
                             client._logger.error(err);
@@ -112,45 +110,7 @@ var TennuSay = {
             };
         }
 
-        function details(IRCMessage) {
-            var type = IRCMessage.args[1];
-            if (['response', 'trigger'].indexOf(type) === -1) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: ['Subcommand for respond delete not found. See !help respond delete and check your PMs/notices.']
-                };
-            }
-
-            // validate ID
-            var ID = parseInt(IRCMessage.args[2], 10);
-            if (isNaN(ID)) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: 'ID is not a number.'
-                };
-            }
-
-            return dbResponsePromise.then(function(respond) {
-                return respond.details(type, ID);
-            }).then(function(details) {
-                if (details.length === 0) {
-                    return {
-                        intent: 'notice',
-                        query: true,
-                        message: format('Couldnt find anything for "%s" ID=%s', type, ID)
-                    };
-                }
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: format('%s ID %s "%s" added by %s on %s modified on %s', type, ID, details.Response, details.CreatedBy, moment(details.CreatedOn), moment(details.UpdatedOn))
-                };
-            });
-        }
-
-        function remove(IRCMessage) {
+        function edit(IRCMessage) {
             var type = IRCMessage.args[1];
             if (['response', 'trigger'].indexOf(type) === -1) {
                 return {
@@ -186,18 +146,6 @@ var TennuSay = {
                     query: true,
                     message: format('%s Deleted. Resulted in these triggers from being removed: %s', type, _.pluck(triggersRemoved, 'Trigger').join(', '))
                 };
-            });
-        }
-
-        function search(IRCMessage) {
-            var sayArgs = parseArgs(IRCMessage.args, respondListSearchArgs);
-            var page = sayArgs.page || 0;
-
-            return dbResponsePromise.then(function(respond) {
-                return respond.search(sayArgs._.join(' '), page, aSayConfig.defaultChance);
-            }).then(function(results) {
-                // Todo: formatting
-                console.log(results);
             });
         }
 
@@ -243,6 +191,14 @@ var TennuSay = {
                 };
             });
         }
+
+        function remove(IRCMessage){
+            
+        }
+        
+        function list(IRCMessage){
+            // haste
+        }        
 
         function adminFail(err) {
             return {
