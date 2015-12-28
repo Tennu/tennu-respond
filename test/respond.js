@@ -1,6 +1,4 @@
-var assert = require("assert");
 var _ = require("lodash");
-var Promise = require('bluebird');
 
 var responseTryEmit = require("./respond-try-emit")
 var responseAdd = require("./respond-add");

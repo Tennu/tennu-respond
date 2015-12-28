@@ -28,7 +28,6 @@ var responseRemoveTests = function(dbResponsePromise) {
             });
         });
 
-
         describe('Valid remove usage', function() {
             it('Should return deleted response and related triggers', function(done) {
                 dbResponsePromise.then(function(respond) {

@@ -1,10 +1,11 @@
-var parseArgs = require("minimist");
-var moment = require('moment');
+// var parseArgs = require("minimist");
+// var moment = require('moment');
 var format = require('util').format;
 var Promise = require('bluebird');
-var clamp = require('clamp');
+// var clamp = require('clamp');
 var _ = require('lodash');
 var haste = require('./lib/haste');
+var modelFormat = require('./lib/model-format');
 
 // Will not change if 2 instances of tennu launched
 // Move this to JSON
@@ -28,7 +29,7 @@ const helps = {
         "Modifys the text and chance for the response or trigger.",
         "Modifiers: ",
         "-c=chance : must be between 0.000 and 1.000"
-    ],    
+    ],
     "remove": [
         "{{!}}respond remove <type> <ID>",
         "Removes either a trigger or a respond.",
@@ -40,13 +41,29 @@ const helps = {
     ],
 };
 
-const requiresAdminHelp = 'This command requires administrator proviledges.';
+const _requiresAdminHelp = 'This command requires administrator proviledges.';
 
-const respondAddArgs = {
-    alias: {
-        'c': 'chance'
-    }
+const _getNotice = function(message) {
+    return {
+        'intent': 'notice',
+        'query': 'true',
+        'message': message
+    };
 };
+
+const _adminFail = function(err) {
+    return {
+        intent: 'notice',
+        query: true,
+        message: err
+    };
+}
+
+// const respondAddArgs = {
+//     alias: {
+//         'c': 'chance'
+//     }
+// };
 
 var TennuSay = {
     requiresRoles: ["admin", "dbcore"],
@@ -61,38 +78,33 @@ var TennuSay = {
             });
         });
 
-        var aSayConfig = client.config("respond");
+        var respondConfig = client.config("respond");
 
-        if (!aSayConfig || !aSayConfig.hasOwnProperty("defaultChance")) {
+        if (!respondConfig || !respondConfig.hasOwnProperty("defaultChance")) {
             throw Error("respond is missing some or all of its configuration.");
         }
 
-        function respond() {
+        /**
+         * Handles parsing subcommands out of !respond.
+         **/
+        function respondRouter() {
             return function(IRCMessage) {
                 return isAdmin(IRCMessage.hostmask).then(function(isadmin) {
                     // isadmin will be "undefined" if cooldown system is enabled
                     // isadmin will be true/false if cooldown system is disabled
                     if (typeof(isadmin) !== "undefined" && isadmin === false) {
-                        throw new Error(requiresAdminHelp);
+                        throw new Error(_requiresAdminHelp);
                     }
                 }).then(function() {
                     switch (IRCMessage.args[0]) {
-                        case 'add':
-                            return add(IRCMessage);
-                        case 'search':
-                            return search(IRCMessage);
-                        case 'details':
-                            return details(IRCMessage);
+                        case 'list':
+                            return list(IRCMessage);
                         case 'remove':
                             return remove(IRCMessage);
                         default:
-                            return {
-                                intent: 'notice',
-                                query: true,
-                                message: ['Subcommand for respond not found. See !help respond and check your PMs.']
-                            };
+                            return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
                     }
-                }).catch(adminFail);
+                }).catch(_adminFail);
             };
         }
 
@@ -110,108 +122,56 @@ var TennuSay = {
             };
         }
 
-        function edit(IRCMessage) {
-            var type = IRCMessage.args[1];
-            if (['response', 'trigger'].indexOf(type) === -1) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: ['Subcommand for respond delete not found. See !help respond delete and check your PMs/notices.']
-                };
-            }
-
-            // validate ID
-            var ID = parseInt(IRCMessage.args[2], 10);
-            if (isNaN(ID)) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: 'ID is not a number.'
-                };
-            }
-
+        function list(IRCMessage) {
             return dbResponsePromise.then(function(respond) {
-                return respond.remove(type, ID);
-            }).then(function(triggersRemoved) {
-                console.log(triggersRemoved);
-                if (triggersRemoved.length === 0) {
-                    return {
-                        intent: 'notice',
-                        query: true,
-                        message: format('Couldnt find anything to delete for "%s" ID=%s', type, ID)
-                    };
-                }
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: format('%s Deleted. Resulted in these triggers from being removed: %s', type, _.pluck(triggersRemoved, 'Trigger').join(', '))
-                };
+                return respond.getAll().then(function(allResponsesAndTriggers) {
+
+                    if (allResponsesAndTriggers.length === 0) {
+                        return _getNotice('There are no responses yet. Use "!help respond" to add some.');
+                    }
+
+                    return Promise.try(function() {
+                            return haste.postText(modelFormat.formatAll(allResponsesAndTriggers));
+                        })
+                        .then(function(hasteKey) {
+                            return _getNotice('https://hastebin.com/' + hasteKey);
+                        })
+                        .catch(function(err) {
+                            client._logger.error('Tennu-respond: An error has occured when attempting to haste.');
+                            client._logger.error(err);
+                            return _getNotice(err)
+                        });
+                });
             });
         }
 
-        function add(IRCMessage) {
-            var sayArgs = parseArgs(IRCMessage.args, respondAddArgs);
-
-            var slashes = IRCMessage.message.match(/\//g);
-
-            if (!slashes || slashes.length < 1) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: ['respond takes a target(s) and a response.']
-                };
-            }
-
-            var chance = aSayConfig.defaultChance;
-            if (typeof(sayArgs.chance) !== 'undefined') {
-                chance = clamp(sayArgs.chance, 0.0, 1.0);
-            }
-
-            // Build the targets and responses
-            var items = _.takeRight(sayArgs._, sayArgs._.length - 1).join(' ').split('/');
-            var targets = _.take(items, items.length - 1);
-            var response = _.last(items);
-
+        function remove(IRCMessage) {
             return dbResponsePromise.then(function(respond) {
-                return respond.add(targets, response, chance, IRCMessage.nickname);
-            }).then(function() {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: [
-                        format('When I hear: ', targets.join(', ')),
-                        format('Response added. I will reply with "%s" %s% of the time.', response, (chance * 100))
-                    ]
-                };
-            }).catch(function(err) {
-                return {
-                    intent: 'notice',
-                    query: true,
-                    message: err
-                };
+                var respondType = IRCMessage.args[1];
+                var ID = IRCMessage.args[2];
+                return Promise.try(function() {
+                        return respond.remove(respondType, ID);
+                    })
+                    .then(function(removedItems){
+                        // Formatting....
+                        console.log(removedItems);
+                    })
+                    .catch(function(err) {
+                        if (err.type === 'respond.typeinvalid') {
+                            return _getNotice('Type must be "response" or "trigger"');
+                        }
+                        // Thrown by bookshelf 'require: true'
+                        if (err.message === 'EmptyResponse') {
+                            return _getNotice(format('%s is not a valid %s ID.', ID, respondType));
+                        }
+                    });
             });
-        }
-
-        function remove(IRCMessage){
-            
-        }
-        
-        function list(IRCMessage){
-            // haste
-        }        
-
-        function adminFail(err) {
-            return {
-                intent: 'notice',
-                query: true,
-                message: err
-            };
         }
 
         return {
             handlers: {
                 "privmsg": emitResponse(),
-                "!respond": respond(),
+                "!respond": respondRouter(),
             },
             commands: ["respond"],
             help: {

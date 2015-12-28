@@ -1,3 +1,5 @@
+var Promise = require('bluebird');
+
 var client = require('./mock-client');
 var dbcoreModule = require('tennu-dbcore');
 var plugin = require('../plugin');
@@ -13,8 +15,10 @@ if (process.env.NODE_ENV === 'development') {
 
 var imports = {
     dbcore: dbcoreModule.init(client, null).exports,
-    admin: {
-        isAdmin: Promise.resolve()
+    'admin': {
+        'isAdmin': function() {
+            return Promise.resolve();
+        }
     }
 };
 
@@ -36,7 +40,6 @@ respondTests(dbResponsePromise);
 
 cacheTests(dbResponsePromise);
 
-// Integration
 respondCacheIntegrationTests(dbResponsePromise);
 
-pluginRespondIntegrationTests(plugin.init(client, imports));
+pluginRespondIntegrationTests(dbResponsePromise, plugin.init(client, imports));
