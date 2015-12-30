@@ -12,8 +12,8 @@ function commandHandler(plugin) {
 function _isNotice(object) {
     assert.equal(_.isEqual(_.omit(object, 'message'), {
         intent: 'notice',
-        query: 'true'
-    }), true);
+        query: true
+    }), true, 'Object recieved back is NOT a tennu notice response');
 }
 
 var responseAddTests = function(dbResponsePromise, plugin) {
@@ -47,12 +47,14 @@ var responseAddTests = function(dbResponsePromise, plugin) {
         });
         describe('respond list', function() {
             var IRCMessage = MockIRCMessageBuilder('!respond list');
-            it('Should return haste key with a list of all responses and triggers', function() {
+            it('Should return haste key with a list of all responses and triggers', function(done) {
                 return Promise.try(function() {
                     return handle(IRCMessage);
                 }).then(function(pluginResponse) {
                     _isNotice(pluginResponse);
                     assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true);
+                }).then(function() {
+                    done();
                 });
             });
             it('Should return help text when no responses in DB', function(done) {
@@ -107,7 +109,7 @@ var responseAddTests = function(dbResponsePromise, plugin) {
             });
             describe('Valid usage', function() {
                 describe('Response', function() {
-                    it('Should return....', function(done) {
+                    it('Should return deleted response notice', function(done) {
                         dbResponsePromise.then(function(respond) {
                             return Promise.try(function() {
                                 return new respond.Response({
@@ -116,9 +118,13 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                     require: true
                                 });
                             }).then(function(response) {
-                                var IRCMessage = MockIRCMessageBuilder('!respond remove response ' + response.id);
+                                var IRCMessage = MockIRCMessageBuilder('!respond remove response ' + response.get('id'));
                                 return Promise.try(function() {
                                     return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message.length, 4);
+                                    assert.equal(pluginResponse.message[0], 'DELETED');
                                 });
                             }).then(function() {
                                 done();
@@ -127,7 +133,7 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                     });
                 });
                 describe('Trigger', function() {
-                    it('One of many triggers removed should return....', function(done) {
+                    it('One of many triggers removed should return deleted trigger notice', function(done) {
                         dbResponsePromise.then(function(respond) {
                             return Promise.try(function() {
                                 return new respond.Trigger({
@@ -139,13 +145,16 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                 var IRCMessage = MockIRCMessageBuilder('!respond remove trigger ' + response.id);
                                 return Promise.try(function() {
                                     return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message.length, 2);
                                 });
                             }).then(function() {
                                 done();
                             });
                         });
                     });
-                    it('Only triggers removed should return....', function(done) {
+                    it('Only triggers removed should return deleted response and trigger notice', function(done) {
                         dbResponsePromise.then(function(respond) {
                             return Promise.try(function() {
                                 return new respond.Trigger({
@@ -157,14 +166,209 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                 var IRCMessage = MockIRCMessageBuilder('!respond remove trigger ' + response.id);
                                 return Promise.try(function() {
                                     return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message.length, 3);
                                 });
                             }).then(function() {
                                 done();
                             });
                         });
                     });
-                });                
+                });
             });
+        });
+        describe('respond edit', function() {
+            describe('invalid usage', function() {
+                it('Should return notice error on invalid type', function() {
+                    var IRCMessage = MockIRCMessageBuilder('!respond edit poop 0');
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        _isNotice(pluginResponse);
+                        assert.equal(pluginResponse.message, 'Type must be "response" or "trigger"');
+                    });
+                });
+            })
+            describe('response', function() {
+                describe('Invalid usage', function() {
+                    it('Should return notice error on invalid response ID', function() {
+                        var IRCMessage = MockIRCMessageBuilder('!respond edit response 0 hello World');
+                        return Promise.try(function() {
+                            return handle(IRCMessage);
+                        }).then(function(pluginResponse) {
+                            _isNotice(pluginResponse);
+                            assert.equal(pluginResponse.message, '0 is not a valid response ID.');
+                        });
+                    });
+                    it('Should return notice error on response missing text', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Response({
+                                    'response': 'response two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit response ' + response.get('id'));
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message, 'You must provide new text for the response');
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                });
+                describe('Valid usage', function() {
+                    it('Should edit a response and return human readable confirmation', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Response({
+                                    'response': 'response two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit response ' + response.get('id') + ' hello World');
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message.length, 2);
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('trigger', function() {
+                describe('Invalid usage', function() {
+                    it('Should return notice error on invalid trigger ID', function() {
+                        var IRCMessage = MockIRCMessageBuilder('!respond edit trigger 0 hello World');
+                        return Promise.try(function() {
+                            return handle(IRCMessage);
+                        }).then(function(pluginResponse) {
+                            _isNotice(pluginResponse);
+                            assert.equal(pluginResponse.message, '0 is not a valid trigger ID.');
+                        });
+                    });
+                    it('Should return notice error on trigger missing text', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Trigger({
+                                    'trigger': 'trigger two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger ' + response.get('id'));
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message, 'You must provide new text for the trigger');
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                    it('Should return notice error on invalid chance', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Trigger({
+                                    'trigger': 'trigger two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger -c=101 ' + response.get('id') + ' hello World');
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message, 'The chance must be a number less than or equal to 1');
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                    it('Should return notice error on invalid chance when real ID provided', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Trigger({
+                                    'trigger': 'trigger two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger -c=101 ' + response.get('id') + ' hello World');
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message, 'The chance must be a number less than or equal to 1');
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                    it('Should return notice error on valid chance when bogus ID provided', function() {
+                        var IRCMessage = MockIRCMessageBuilder('!respond edit trigger 0 -c=1.00 hello World');
+                        return Promise.try(function() {
+                            return handle(IRCMessage);
+                        }).then(function(pluginResponse) {
+                            _isNotice(pluginResponse);
+                            assert.equal(pluginResponse.message, '0 is not a valid trigger ID.');
+                        });
+                    });
+                });
+                describe('Valid usage', function() {
+                    it('Should edit a trigger and return human readable confirmation', function(done) {
+                        dbResponsePromise.then(function(respond) {
+                            return Promise.try(function() {
+                                return new respond.Trigger({
+                                    'trigger': 'trigger two'
+                                }).fetch({
+                                    require: true
+                                });
+                            }).then(function(response) {
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger -c=1.00 ' + response.get('id') + ' hello World');
+                                return Promise.try(function() {
+                                    return handle(IRCMessage);
+                                }).then(function(pluginResponse) {
+                                    _isNotice(pluginResponse);
+                                    assert.equal(pluginResponse.message.length, 2);
+                                });
+                            }).then(function() {
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+        describe('respond add', function() {
+            describe('Invalid usage', function() {
+                it('Should return error notice when missing args', function() {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add');
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        //_isNotice(pluginResponse);
+                        // assert.equal(pluginResponse.message, 'Type must be "response" or "trigger"');
+                    });
+                });
+            });
+            describe('Valid usage');
         });
     });
 };

@@ -6,19 +6,9 @@ var responseRemoveTests = function(dbResponsePromise) {
     describe('#remove()', function() {
 
         describe('Invalid remove usage', function() {
-            it('Invalid type should throw', function(done) {
-                dbResponsePromise.then(function(respond) {
-                        return respond.remove('', 42);
-                    })
-                    .then(assert.fail)
-                    .catch(function(e) {
-                        assert.equal(e.type, 'respond.typeinvalid');
-                        done();
-                    });
-            });
             it('Invalid id should throw', function(done) {
                 dbResponsePromise.then(function(respond) {
-                        return respond.remove('response', -42);
+                        return respond.removeResponse(-42);
                     })
                     .then(assert.fail)
                     .catch(function(e) {
@@ -36,7 +26,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                             'response': 'response one'
                         }).fetch();
                     }).then(function(response) {
-                        return respond.remove('response', response.get('id'));
+                        return respond.removeResponse(response.get('id'));
                     }).then(function(deletedReponse) {
 
                         // Response
@@ -81,7 +71,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                                 'response': 'response one'
                             }).fetch();
                         }).then(function(response) {
-                            return respond.remove('response', response.get('id'));
+                            return respond.removeResponse(response.get('id'));
                         }).then(function(deletedResponse) {
                             return new respond.Response({
                                 'id': deletedResponse.id
@@ -108,7 +98,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                                 trigger: 'trigger four'
                             }).fetch();
                         }).then(function(trigger) {
-                            return respond.remove('trigger', trigger.id);
+                            return respond.removeTrigger(trigger.id);
                         })
                         .then(function(deletedTrigger) {
 
@@ -149,7 +139,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                                 require: true
                             });
                         }).then(function(trigger) {
-                            return respond.remove('trigger', trigger.id);
+                            return respond.removeTrigger(trigger.id);
                         })
                         .then(function(deletedTrigger) {
                             return new respond.Response({
@@ -174,7 +164,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                                 trigger: 'trigger six'
                             }).fetch();
                         }).then(function(trigger) {
-                            return respond.remove('trigger', trigger.id);
+                            return respond.removeTrigger(trigger.id);
                         })
                         .then(function(deletedTrigger) {
 

@@ -98,7 +98,7 @@ var respondCacheIntegration = function(dbResponsePromise) {
                         }).then(function(response) {
                             var responseId = response.get('id');
                             return Promise.try(function() {
-                                return respond.remove('response', response.get('id'));
+                                return respond.removeResponse(response.get('id'));
                             }).then(function(deletedReponse) {
                                 // We shouldt find ANY triggers that match the deleted response_id.
                                 assert.equal(_.some(cache.triggerCache, 'response_id', responseId), false);
@@ -117,7 +117,7 @@ var respondCacheIntegration = function(dbResponsePromise) {
                         }).then(function(trigger) {
                             var triggerId = trigger.id;
                             return Promise.try(function() {
-                                return respond.remove('trigger', triggerId);
+                                return respond.removeTrigger(triggerId);
                             }).then(function(deletedTrigger) {
                                 // We shouldt find ANY triggers that match the deleted response_id.
                                 assert.equal(_.some(cache.triggerCache, 'id', deletedTrigger), false);

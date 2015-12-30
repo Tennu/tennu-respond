@@ -1,4 +1,4 @@
-// var parseArgs = require("minimist");
+var parseArgs = require("minimist");
 // var moment = require('moment');
 var format = require('util').format;
 var Promise = require('bluebird');
@@ -6,47 +6,18 @@ var Promise = require('bluebird');
 var _ = require('lodash');
 var haste = require('./lib/haste');
 var modelFormat = require('./lib/model-format');
+var validators = require('./lib/validators');
 
 // Will not change if 2 instances of tennu launched
 // Move this to JSON
-const helps = {
-    "global": [
-        "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
-        "!respond add [-c=.3] <ID> <new_text>",
-        "!respond edit <type> <ID> <new_text>",
-        "!respond remove <type> <ID>",
-        "!respond list",
-    ],
-    "add": [
-        "{{!}}respond [-c=chance] <target>[/<target2>/<target3>]/<response>",
-        "Sets a trigger word(s) with a chance of responding with a phrase.",
-        "Modifiers: ",
-        "-c=chance : must be between 0.000 and 1.000"
-    ],
-    // How to handle editing chance?
-    "edit": [
-        "{{!}}respond edit <type> <ID> <new_text>",
-        "Modifys the text and chance for the response or trigger.",
-        "Modifiers: ",
-        "-c=chance : must be between 0.000 and 1.000"
-    ],
-    "remove": [
-        "{{!}}respond remove <type> <ID>",
-        "Removes either a trigger or a respond.",
-        "CAUTION:",
-        "Removing a respond removes ALL triggers. Likewise, removing the only trigger for a respond, removes the respond.",
-    ],
-    "list": [
-        "{{!}}returns a haste url containing all responses and triggers in DB",
-    ],
-};
+const helps = require('./help');
 
 const _requiresAdminHelp = 'This command requires administrator proviledges.';
 
 const _getNotice = function(message) {
     return {
         'intent': 'notice',
-        'query': 'true',
+        'query': true,
         'message': message
     };
 };
@@ -59,11 +30,11 @@ const _adminFail = function(err) {
     };
 }
 
-// const respondAddArgs = {
-//     alias: {
-//         'c': 'chance'
-//     }
-// };
+const responseEditArgs = {
+    alias: {
+        'c': 'chance'
+    }
+};
 
 var TennuSay = {
     requiresRoles: ["admin", "dbcore"],
@@ -101,6 +72,10 @@ var TennuSay = {
                             return list(IRCMessage);
                         case 'remove':
                             return remove(IRCMessage);
+                        case 'edit':
+                            return edit(IRCMessage);
+                        case 'add':
+                            return add(IRCMessage);                            
                         default:
                             return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
                     }
@@ -133,39 +108,115 @@ var TennuSay = {
                     return Promise.try(function() {
                             return haste.postText(modelFormat.formatAll(allResponsesAndTriggers));
                         })
-                        .then(function(hasteKey) {
-                            return _getNotice('https://hastebin.com/' + hasteKey);
-                        })
                         .catch(function(err) {
                             client._logger.error('Tennu-respond: An error has occured when attempting to haste.');
                             client._logger.error(err);
                             return _getNotice(err)
+                        })
+                        .then(function(hasteKey) {
+                            console.log(hasteKey);
+                            return _getNotice('https://hastebin.com/' + hasteKey);
                         });
                 });
             });
         }
 
         function remove(IRCMessage) {
-            return dbResponsePromise.then(function(respond) {
-                var respondType = IRCMessage.args[1];
-                var ID = IRCMessage.args[2];
-                return Promise.try(function() {
-                        return respond.remove(respondType, ID);
-                    })
-                    .then(function(removedItems){
-                        // Formatting....
-                        console.log(removedItems);
-                    })
-                    .catch(function(err) {
-                        if (err.type === 'respond.typeinvalid') {
-                            return _getNotice('Type must be "response" or "trigger"');
-                        }
-                        // Thrown by bookshelf 'require: true'
-                        if (err.message === 'EmptyResponse') {
-                            return _getNotice(format('%s is not a valid %s ID.', ID, respondType));
-                        }
+
+            var respondType = IRCMessage.args[1];
+            var ID = IRCMessage.args[2];
+
+            return Promise.try(validators.validateType(respondType))
+                .then(function() {
+                    return dbResponsePromise.then(function(respond) {
+                        return Promise.try(function() {
+                                var methodName = 'remove' + _.capitalize(respondType);
+                                return respond[methodName](ID);
+                            })
+                            .then(function(removedItems) {
+                                if (_.has(removedItems, 'trigger') && _.has(removedItems, 'response')) {
+                                    var formatResponse = modelFormat.formatResponse(removedItems.response);
+                                    var formattedTrigger = modelFormat.formatTrigger(removedItems.trigger);
+                                    return formatResponse + formattedTrigger;
+                                }
+                                else if (_.has(removedItems, 'trigger')) {
+                                    return modelFormat.formatTrigger(removedItems.trigger);
+                                }
+                                else {
+                                    return modelFormat.formatAll([removedItems]);
+                                }
+                            })
+                            .then(function(formatted) {
+                                return modelFormat.formatTennuResponseFriendly(formatted, 'DELETED');
+                            }).then(function(messages) {
+                                return _getNotice(messages);
+                            })
+                            .catch(function(err) {
+                                //console.log(err);
+                                // Thrown by bookshelf 'require: true'
+                                if (err.message === 'EmptyResponse') {
+                                    return _getNotice(format('%s is not a valid %s ID.', ID, respondType));
+                                }
+                            });
                     });
-            });
+                }).catch(function() {
+                    return _getNotice('Type must be "response" or "trigger"');
+                });
+        }
+
+        function edit(IRCMessage) {
+
+            var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+
+            var respondType = sargs._[1];
+            var ID = sargs._[2];
+            var chance = sargs.chance;
+            var text = sargs._.slice(3, sargs._.length).join(' ');
+
+            return Promise.try(validators.validateType(respondType))
+                .then(function() {
+                    return dbResponsePromise.then(function(respond) {
+                        return respond.edit(respondType, ID, text, chance);
+                    }).then(function(modified) {
+                        var methodName = 'formatUpdated' + _.capitalize(respondType);
+                        return modelFormat[methodName](modified);
+                    }).then(function(formatted) {
+                        return modelFormat.formatTennuResponseFriendly(formatted, 'UPDATED');
+                    }).then(function(messages) {
+                        return _getNotice(messages);
+                    });
+                }).catch(function(err) {
+
+                    if (err.type === 'respond.typeinvalid') {
+                        return _getNotice('Type must be "response" or "trigger"');
+                    }
+
+                    if (err.message === 'No Rows Updated' || err.message === 'EmptyResponse') {
+                        return _getNotice(format('%s is not a valid %s ID.', ID, respondType));
+                    }
+
+                    if (_.get(err, ['errors', respondType, 'message'], null) === format('The %s is required', respondType)) {
+                        return _getNotice(format('You must provide new text for the %s', respondType));
+                    }
+
+                    if (_.get(err, ['errors', 'chance', 'message'], false)) {
+                        return _getNotice(_.get(err, ['errors', 'chance', 'message']));
+                    }
+
+                });
+        }
+
+        function add(IRCMessage){
+            
+            // !respond t/t/t/t/r
+            
+            var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+            
+            var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
+            
+            var choppedText = sargs._.slice(1, sargs._.length).split('/');
+            
+            
         }
 
         return {
