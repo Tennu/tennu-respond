@@ -91,11 +91,6 @@ var TennuRespond = {
                     })
                     .then(function(responses) {
                         return _.pluck(responses, 'response');
-                    })
-                    .catch(function(err) {
-                        if (err.type !== 'respond.notrigger') {
-                            client._logger.error(err);
-                        }
                     });
             };
         }
@@ -257,9 +252,6 @@ var TennuRespond = {
         }
 
         function addtriggers(IRCMessage) {
-
-            // !respond addtriggers 42 -c1 1/2/3/4/5
-            // addTriggers(responseId, triggers, chance, nickname)
 
             return Promise.try(function() {
                     var match = IRCMessage.message.match(/(addtriggers (\d+) )/);

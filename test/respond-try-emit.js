@@ -6,7 +6,7 @@ var responseAddTests = function(dbResponsePromise) {
     describe('#tryEmit()', function() {
 
         describe('Valid usage', function() {
-            it('Should return hits when 100% chance trigger hits.', function(done) {
+            it('Should return hits when 100% chance trigger hits', function(done) {
                 dbResponsePromise.then(function(respond) {
                     return Promise.try(function() {
                         return respond.add('custom', 'c', 1.00, 'TestUser');
@@ -28,24 +28,25 @@ var responseAddTests = function(dbResponsePromise) {
                     });
                 });
             });
-            it('Should return nothing when 0% chance trigger hits.', function(done) {
+            it('Should throw when 0% chance trigger called', function(done) {
                 dbResponsePromise.then(function(respond) {
                     return Promise.try(function() {
                         return respond.add('custom', 'c', 0.00, 'TestUser');
                     }).then(function(newResponse) {
                         return Promise.try(function() {
                                 return respond.tryEmit('hello my custom world.');
-                            }).then(function(hits) {
-                                assert.equal(hits.length, 0);
                             })
-                            .catch(assert.fail)
+                            .then(assert.fail)
+                            .catch(function(err){
+                                assert.equal(err.type, 'respond.notriggerpassedchancecheck');
+                            })
                             .then(function() {
                                 done();
                             });
                     });
                 });
             });
-            it('Should throw when no trigger matches the message content.', function(done) {
+            it('Should throw when no trigger matches the message content', function(done) {
                 dbResponsePromise.then(function(respond) {
                         return respond.tryEmit('hello my custom world.');
                     }).then(assert.fail)

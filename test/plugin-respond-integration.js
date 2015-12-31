@@ -45,6 +45,24 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                     done();
                 });
             });
+            it('Should return nothing when a trigger with a 0% chance is hit', function(done) {
+                dbResponsePromise.then(function(respond) {
+                    return Promise.try(function() {
+                        return respond.add('custom', 'c', 0.00, 'TestUser');
+                    }).then(function(newResponse) {
+                        return Promise.try(function() {
+                                return respond.tryEmit('hello my custom world.');
+                            })
+                            .then(assert.fail)
+                            .catch(function(err){
+                                assert.equal(err.type, 'respond.notriggerpassedchancecheck');
+                            })
+                            .then(function() {
+                                done();
+                            });
+                    });
+                });
+            });
         });
 
         describe('respond list', function() {
@@ -53,7 +71,6 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                 return Promise.try(function() {
                     return handle(IRCMessage);
                 }).then(function(pluginResponse) {
-                    console.log(pluginResponse);
                     _isNotice(pluginResponse);
                     assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true);
                 }).then(function() {
@@ -372,6 +389,16 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                         done();
                     });
                 });
+                it('Should return error notice whenresponse ID missing', function(done) {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add -c=1.00 1/ /a');
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        _isNotice(pluginResponse);
+                        assert.equal(pluginResponse.message, 'Trigger or response missing.');
+                        done();
+                    });
+                });                
                 it('Should return error notice when args invalid', function(done) {
                     var IRCMessage = MockIRCMessageBuilder('!respond add -c=1.00 1 a/');
                     return Promise.try(function() {
@@ -445,7 +472,6 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                 return handle(IRCMessage);
                             }).then(function(pluginResponse) {
                                 _isNotice(pluginResponse);
-                                console.log(pluginResponse);
                             });
                         }).then(function() {
                             done();
