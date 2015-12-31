@@ -9,7 +9,6 @@ var modelFormat = require('./lib/model-format');
 var validators = require('./lib/validators');
 
 // Will not change if 2 instances of tennu launched
-// Move this to JSON
 const helps = require('./help');
 
 const _requiresAdminHelp = 'This command requires administrator proviledges.';
@@ -36,7 +35,7 @@ const responseEditArgs = {
     }
 };
 
-var TennuSay = {
+var TennuRespond = {
     requiresRoles: ["admin", "dbcore"],
     init: function(client, imports) {
 
@@ -75,7 +74,9 @@ var TennuSay = {
                         case 'edit':
                             return edit(IRCMessage);
                         case 'add':
-                            return add(IRCMessage);                            
+                            return add(IRCMessage);
+                        case 'addtriggers':
+                            return addtriggers(IRCMessage);
                         default:
                             return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
                     }
@@ -86,14 +87,16 @@ var TennuSay = {
         function emitResponse() {
             return function(IRCMessage) {
                 return dbResponsePromise.then(function(respond) {
-                    return respond.tryEmit(IRCMessage.message).then(function(responses) {
+                        return respond.tryEmit(IRCMessage.message)
+                    })
+                    .then(function(responses) {
                         return _.pluck(responses, 'response');
-                    }).catch(function(err) {
+                    })
+                    .catch(function(err) {
                         if (err.type !== 'respond.notrigger') {
                             client._logger.error(err);
                         }
                     });
-                });
             };
         }
 
@@ -106,7 +109,20 @@ var TennuSay = {
                     }
 
                     return Promise.try(function() {
-                            return haste.postText(modelFormat.formatAll(allResponsesAndTriggers));
+                            var header = [
+                                _.repeat('-', 90),
+                                format('generated %s by %s', new Date(), IRCMessage.nickname),
+                                format('Found %s responses.', allResponsesAndTriggers.length),
+                                '',
+                                'Report Fromat:',
+                                '> Response data',
+                                '\t> Response related trigger data',
+                                '',
+                                _.repeat('-', 90),
+                                ' ',
+                            ].join('\n');
+                            var formated = modelFormat.formatAll(allResponsesAndTriggers);
+                            return haste.postText(header + formated);
                         })
                         .catch(function(err) {
                             client._logger.error('Tennu-respond: An error has occured when attempting to haste.');
@@ -114,7 +130,6 @@ var TennuSay = {
                             return _getNotice(err)
                         })
                         .then(function(hasteKey) {
-                            console.log(hasteKey);
                             return _getNotice('https://hastebin.com/' + hasteKey);
                         });
                 });
@@ -152,8 +167,6 @@ var TennuSay = {
                                 return _getNotice(messages);
                             })
                             .catch(function(err) {
-                                //console.log(err);
-                                // Thrown by bookshelf 'require: true'
                                 if (err.message === 'EmptyResponse') {
                                     return _getNotice(format('%s is not a valid %s ID.', ID, respondType));
                                 }
@@ -206,17 +219,87 @@ var TennuSay = {
                 });
         }
 
-        function add(IRCMessage){
-            
-            // !respond t/t/t/t/r
-            
+        function add(IRCMessage) {
+
             var sargs = parseArgs(IRCMessage.args, responseEditArgs);
-            
+
             var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
-            
-            var choppedText = sargs._.slice(1, sargs._.length).split('/');
-            
-            
+
+            var stringStart = (IRCMessage.message.indexOf('add') + 4);
+            var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
+            var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
+            var choppedText = trimmedAndFilteredStr.split('/');
+
+            var cleanedTriggers = _(choppedText).map(_.trim).value();
+
+            if (_.some(cleanedTriggers, _.isEmpty)) {
+                return _getNotice('Trigger or response missing.');
+            }
+
+            if (choppedText.length < 2) {
+                return _getNotice('At least one trigger is required. See "!help respond add"');
+            }
+
+            if (_.some(choppedText, _.isEmpty)) {
+                return _getNotice('Trigger or response missing.');
+            }
+
+            return dbResponsePromise.then(function(respond) {
+                return respond.add(_.dropRight(cleanedTriggers), _.last(cleanedTriggers), chance, IRCMessage.nickname);
+            }).then(function(added) {
+                return modelFormat.formatAll([added]);
+            }).then(function(formatted) {
+                return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED');
+            }).then(function(messages) {
+                return _getNotice(messages);
+            })
+
+        }
+
+        function addtriggers(IRCMessage) {
+
+            // !respond addtriggers 42 -c1 1/2/3/4/5
+            // addTriggers(responseId, triggers, chance, nickname)
+
+            return Promise.try(function() {
+                    var match = IRCMessage.message.match(/(addtriggers (\d+) )/);
+                    if (match === null) {
+                        throw Error('Response ID missing.');
+                    }
+                    else {
+                        return match[2];
+                    }
+                })
+                .then(function(responseID) {
+
+                    var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+
+                    var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
+
+                    var stringStart = (IRCMessage.message.indexOf(responseID) + responseID.length);
+                    var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
+                    var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
+                    var choppedText = trimmedAndFilteredStr.split('/')
+
+                    var cleanedTriggers = _(choppedText).map(_.trim).value();
+
+                    if (_.some(cleanedTriggers, _.isEmpty)) {
+                        return _getNotice('Trigger or response missing.');
+                    }
+
+                    return dbResponsePromise.then(function(respond) {
+                        return respond.addTriggers(responseID, choppedText, chance, IRCMessage.nickname);
+                    }).then(function(added) {
+                        return modelFormat.formatAll([added]);
+                    }).then(function(formatted) {
+                        return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED TRIGGERS');
+                    }).then(function(messages) {
+                        return _getNotice(messages);
+                    })
+                })
+                .catch(function(err) {
+                    return _getNotice('Response ID missing.');
+                });
         }
 
         return {
@@ -228,11 +311,15 @@ var TennuSay = {
             help: {
                 "respond": {
                     "*": helps.global,
-                    "add": helps.add
+                    "add": helps.add,
+                    "list": helps.list,
+                    "edit": helps.edit,
+                    "remove": helps.remove,
+                    "addtriggers": helps.addtriggers,
                 }
             }
         };
     }
 };
 
-module.exports = TennuSay;
+module.exports = TennuRespond;

@@ -3,6 +3,7 @@ module.exports = function(message){
     return {
         message: message,
         args: args,
+        nickname: 'Test_User',
         command: args.shift().toLowerCase()
     };
 };

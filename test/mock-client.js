@@ -1,10 +1,13 @@
 function logger() {
     return {
         "notice": function(text) {
-            //console.info(text);
+            console.info(text);
         },
         "debug": function(text) {
-            //console.info(text);
+            console.info(text);
+        },
+        "error": function(text) {
+            console.error('ERROR SENT TO TENNU_CLIENT._LOGGER.ERROR');
         }
     }
 }
