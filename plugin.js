@@ -11,8 +11,6 @@ var validators = require('./lib/validators');
 // Will not change if 2 instances of tennu launched
 const helps = require('./help');
 
-const _requiresAdminHelp = 'This command requires administrator proviledges.';
-
 const _getNotice = function(message) {
     return {
         'intent': 'notice',
@@ -21,14 +19,6 @@ const _getNotice = function(message) {
     };
 };
 
-const _adminFail = function(err) {
-    return {
-        intent: 'notice',
-        query: true,
-        message: err
-    };
-}
-
 const responseEditArgs = {
     alias: {
         'c': 'chance'
@@ -36,10 +26,8 @@ const responseEditArgs = {
 };
 
 var TennuRespond = {
-    requiresRoles: ["admin", "dbcore"],
+    requiresRoles: ["dbcore"],
     init: function(client, imports) {
-
-        var isAdmin = imports.admin.isAdmin;
 
         const dbResponsePromise = imports.dbcore.then(function(knex) {
             // response.js will return a promise as it fetches all responses
@@ -59,28 +47,20 @@ var TennuRespond = {
          **/
         function respondRouter() {
             return function(IRCMessage) {
-                return isAdmin(IRCMessage.hostmask).then(function(isadmin) {
-                    // isadmin will be "undefined" if cooldown system is enabled
-                    // isadmin will be true/false if cooldown system is disabled
-                    if (typeof(isadmin) !== "undefined" && isadmin === false) {
-                        throw new Error(_requiresAdminHelp);
-                    }
-                }).then(function() {
-                    switch (IRCMessage.args[0]) {
-                        case 'list':
-                            return list(IRCMessage);
-                        case 'remove':
-                            return remove(IRCMessage);
-                        case 'edit':
-                            return edit(IRCMessage);
-                        case 'add':
-                            return add(IRCMessage);
-                        case 'addtriggers':
-                            return addtriggers(IRCMessage);
-                        default:
-                            return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
-                    }
-                }).catch(_adminFail);
+                switch (IRCMessage.args[0]) {
+                    case 'list':
+                        return list(IRCMessage);
+                    case 'remove':
+                        return remove(IRCMessage);
+                    case 'edit':
+                        return edit(IRCMessage);
+                    case 'add':
+                        return add(IRCMessage);
+                    case 'addtriggers':
+                        return addtriggers(IRCMessage);
+                    default:
+                        return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
+                }
             };
         }
 
