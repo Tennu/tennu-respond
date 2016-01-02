@@ -1,8 +1,7 @@
 var parseArgs = require("minimist");
-// var moment = require('moment');
 var format = require('util').format;
 var Promise = require('bluebird');
-// var clamp = require('clamp');
+var clamp = require('clamp');
 var _ = require('lodash');
 var haste = require('./lib/haste');
 var modelFormat = require('./lib/model-format');
@@ -71,6 +70,11 @@ var TennuRespond = {
                     })
                     .then(function(responses) {
                         return _.pluck(responses, 'response');
+                    })
+                    .catch(function(err) {
+                        if (err.type !== 'respond.notriggerpassedchancecheck' && err.type !== 'respond.notrigger') {
+                            client._logger.error(err);
+                        }
                     });
             };
         }
@@ -138,7 +142,8 @@ var TennuRespond = {
                             })
                             .then(function(formatted) {
                                 return modelFormat.formatTennuResponseFriendly(formatted, 'DELETED');
-                            }).then(function(messages) {
+                            })
+                            .then(function(messages) {
                                 return _getNotice(messages);
                             })
                             .catch(function(err) {
@@ -147,7 +152,8 @@ var TennuRespond = {
                                 }
                             });
                     });
-                }).catch(function() {
+                })
+                .catch(function() {
                     return _getNotice('Type must be "response" or "trigger"');
                 });
         }
@@ -158,7 +164,7 @@ var TennuRespond = {
 
             var respondType = sargs._[1];
             var ID = sargs._[2];
-            var chance = sargs.chance;
+            var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
             var text = sargs._.slice(3, sargs._.length).join(' ');
 
             return Promise.try(validators.validateType(respondType))
@@ -173,7 +179,8 @@ var TennuRespond = {
                     }).then(function(messages) {
                         return _getNotice(messages);
                     });
-                }).catch(function(err) {
+                })
+                .catch(function(err) {
 
                     if (err.type === 'respond.typeinvalid') {
                         return _getNotice('Type must be "response" or "trigger"');
@@ -198,8 +205,7 @@ var TennuRespond = {
 
             var sargs = parseArgs(IRCMessage.args, responseEditArgs);
 
-            var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
-
+            var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
             var stringStart = (IRCMessage.message.indexOf('add') + 4);
             var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
             var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
@@ -220,14 +226,25 @@ var TennuRespond = {
             }
 
             return dbResponsePromise.then(function(respond) {
-                return respond.add(_.dropRight(cleanedTriggers), _.last(cleanedTriggers), chance, IRCMessage.nickname);
-            }).then(function(added) {
-                return modelFormat.formatAll([added]);
-            }).then(function(formatted) {
-                return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED');
-            }).then(function(messages) {
-                return _getNotice(messages);
-            })
+                    return respond.add(_.dropRight(cleanedTriggers), _.last(cleanedTriggers), chance, IRCMessage.nickname);
+                })
+                .then(function(added) {
+                    return modelFormat.formatAll([added]);
+                })
+                .then(function(formatted) {
+                    return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED');
+                })
+                .then(function(messages) {
+                    return _getNotice(messages);
+                })
+                .catch(function(err) {
+                    if (_.get(err, ['errors', 'chance', 'message'], false)) {
+                        return _getNotice(_.get(err, ['errors', 'chance', 'message']));
+                    }
+                    if (err.message === 'EmptyResponse') {
+                        return _getNotice('Invalid response ID.');
+                    }
+                });
 
         }
 
@@ -246,7 +263,7 @@ var TennuRespond = {
 
                     var sargs = parseArgs(IRCMessage.args, responseEditArgs);
 
-                    var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
+                    var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
 
                     var stringStart = (IRCMessage.message.indexOf(responseID) + responseID.length);
                     var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
@@ -260,18 +277,26 @@ var TennuRespond = {
                     }
 
                     return dbResponsePromise.then(function(respond) {
-                        return respond.addTriggers(responseID, choppedText, chance, IRCMessage.nickname);
-                    }).then(function(added) {
-                        return modelFormat.formatAll([added]);
-                    }).then(function(formatted) {
-                        return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED TRIGGERS');
-                    }).then(function(messages) {
-                        return _getNotice(messages);
-                    })
+                            return respond.addTriggers(responseID, choppedText, chance, IRCMessage.nickname);
+                        })
+                        .then(function(added) {
+                            return modelFormat.formatAll([added]);
+                        })
+                        .then(function(formatted) {
+                            return modelFormat.formatTennuResponseFriendly(formatted, 'ADDED TRIGGERS');
+                        })
+                        .then(function(messages) {
+                            return _getNotice(messages);
+                        })
+                        .catch(function(err) {
+                            if (err.message === 'EmptyResponse') {
+                                return _getNotice('Invalid response ID.');
+                            }
+                        });
                 })
                 .catch(function(err) {
-                    return _getNotice('Response ID missing.');
-                });
+                    return _getNotice(err.message);
+                })
         }
 
         return {
