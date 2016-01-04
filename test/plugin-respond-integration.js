@@ -362,12 +362,15 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                     require: true
                                 });
                             }).then(function(response) {
-                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger -c=1.00 ' + response.get('id') + ' hello World');
+                                var IRCMessage = MockIRCMessageBuilder('!respond edit trigger ' + response.get('id') + ' -c=.25 argue');
                                 return Promise.try(function() {
                                     return handle(IRCMessage);
                                 }).then(function(pluginResponse) {
+                                    console.log(pluginResponse);
                                     _isNotice(pluginResponse);
                                     assert.equal(pluginResponse.message.length, 2);
+                                }).catch(function(err){
+                                    console.log(err);
                                 });
                             }).then(function() {
                                 done();
