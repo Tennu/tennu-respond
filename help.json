@@ -7,6 +7,14 @@
         "{{!}}respond remove <type> <ID>",
         "{{!}}respond list"
     ],
+    "add": [
+        "{{!}}respond add [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
+        "Adds a trigger word(s) with a chance of responding with a phrase, the text after the LAST slash is always the response.",
+        "Example: `!respond add ping/pong`",
+        "would make the bot reply with `pong` to any text sent to the channel containing `ping`",
+        "Modifiers: ",
+        "-c=chance : must be between 0.000 and 1.000"
+    ],    
     "addtriggers": [
         "{{!}}respond addtriggers ID [-c=deciaml] <trigger>/<trigger>/<trigger>",
         "Adds a trigger word(s) with a chance of responding with a phrase to an existing response.",
