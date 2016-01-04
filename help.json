@@ -2,9 +2,9 @@
     "global": [
         "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
         "{{!}}respond add [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
-        "{{!}}respond addtrigger [-c=.3] <Response_ID> <text>",
-        "{{!}}respond edit <type> <ID> [-c=.3] <new_text>",
-        "{{!}}respond remove <type> <ID>",
+        "{{!}}respond addtrigger <Response_ID> [-c=.3] <text>",
+        "{{!}}respond edit <type> <type_ID> [-c=.3] <new_text>",
+        "{{!}}respond remove <type> <type_ID>",
         "{{!}}respond list"
     ],
     "add": [
@@ -16,19 +16,19 @@
         "-c=chance : must be between 0.000 and 1.000"
     ],    
     "addtriggers": [
-        "{{!}}respond addtriggers ID [-c=deciaml] <trigger>/<trigger>/<trigger>",
+        "{{!}}respond addtriggers <response_ID> [-c=deciaml] <trigger>/<trigger>/<trigger>",
         "Adds a trigger word(s) with a chance of responding with a phrase to an existing response.",
         "Modifiers: ",
         "-c=chance : must be between 0.000 and 1.000"
     ],
     "edit": [
-        "{{!}}respond edit <type> <ID> [-c=deciaml] <new_text>",
+        "{{!}}respond edit <type> <type_ID> [-c=deciaml] <new_text>",
         "Modifys the text and chance for the response or trigger.",
         "Modifiers: ",
         "-c=chance : must be between 0.000 and 1.000"
     ],
     "remove": [
-        "{{!}}respond remove <type> <ID>",
+        "{{!}}respond remove <type> <type_ID>",
         "Removes either a trigger or a respond.",
         "CAUTION:",
         "Removing a respond removes ALL triggers. Likewise, removing the only trigger for a response, removes the response."

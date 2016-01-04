@@ -6,9 +6,9 @@ Maintains trigger words that will fire pre-determined responses. Can be set to o
 
 ### Usage
 - ```"{{!}}respond add [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>"```
-- ```"{{!}}respond addtrigger [-c=.3] <Response_ID> <text>"```
-- ```"{{!}}respond edit <type> <ID> [-c=.3] <new_text>"```
-- ```"{{!}}respond remove <type> <ID>"```
+- ```"{{!}}respond addtriggers <Response_ID> [-c=.3] <text>"```
+- ```"{{!}}respond edit <type> <type_ID> [-c=.3] <new_text>"```
+- ```"{{!}}respond remove <type> <type_ID>"```
 - ```"{{!}}respond list"```
 
 ### Configuration
