@@ -63,6 +63,21 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                     });
                 });
             });
+            it('Should return a response after a trigger with 100% chance is edited and hit', function(done) {
+                dbResponsePromise.then(function(respond) {
+                    return Promise.try(function() {
+                        return respond.add('custom', 'c', 1.00, 'TestUser');
+                    })
+                    .then(function(newItems){
+                        var IRCMessage = MockIRCMessageBuilder('!respond edit trigger ' + newItems.triggers[0].id + ' D');
+                        return handle(IRCMessage);
+                    })
+                    .then(function(newResponse) {
+                        assert.equal(newResponse.message[0], 'UPDATED', '\tTrigger (ID:3338) "D" (Chance: 100%)');
+                        done();
+                    });
+                });
+            });            
         });
 
         describe('respond list', function() {
@@ -366,11 +381,8 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                                 return Promise.try(function() {
                                     return handle(IRCMessage);
                                 }).then(function(pluginResponse) {
-                                    console.log(pluginResponse);
                                     _isNotice(pluginResponse);
                                     assert.equal(pluginResponse.message.length, 2);
-                                }).catch(function(err){
-                                    console.log(err);
                                 });
                             }).then(function() {
                                 done();

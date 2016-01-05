@@ -6,7 +6,7 @@ var responseAddTests = function(dbResponsePromise) {
     describe('#addTrigger()', function() {
 
         describe('Valid usage', function() {
-            it('Should return 2 triggers and 1 response.', function(done) {
+            it('Should return 2 triggers and 1 response', function(done) {
                 var created_by = 'TestUser';
                 dbResponsePromise.then(function(respond) {
                         return respond.add(['a', 'b'], 'c', 0.03, created_by);

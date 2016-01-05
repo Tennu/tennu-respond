@@ -164,8 +164,12 @@ var TennuRespond = {
 
             var respondType = sargs._[1];
             var ID = sargs._[2];
-            var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
             var text = sargs._.slice(3, sargs._.length).join(' ');
+            
+            var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
+            if(!_.isUndefined(chance)){
+                chance = clamp.prototype.saturate(chance);
+            }
 
             return Promise.try(validators.validateType(respondType))
                 .then(function() {

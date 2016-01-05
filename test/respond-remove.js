@@ -29,38 +29,60 @@ var responseRemoveTests = function(dbResponsePromise) {
                         return respond.removeResponse(response.get('id'));
                     }).then(function(deletedReponse) {
 
+                        // MySQL is returning my decimal as a string. So this will patch sqlite and mysql.
+                        _.each(deletedReponse.triggers, function(trigger) {
+                            trigger.chance = parseFloat(trigger.chance);
+                        });
+
                         // Response
                         assert.equal(deletedReponse.response, 'response one');
                         assert.equal(deletedReponse.created_by, 'TestUser');
                         assert.equal(_.isNull(deletedReponse.updated_at), false);
                         assert.equal(_.isNull(deletedReponse.created_at), false);
 
-                        // triggers
-                        assert.equal(deletedReponse.triggers[0].response_id, deletedReponse.id);
-                        assert.equal(deletedReponse.triggers[0].trigger, 'trigger one');
-                        assert.equal(deletedReponse.triggers[0].created_by, 'TestUser2');
-                        assert.equal(deletedReponse.triggers[0].chance, 0.03);
-                        assert.equal(_.isNull(deletedReponse.triggers[0].updated_at), false);
-                        assert.equal(_.isNull(deletedReponse.triggers[0].created_at), false);
+                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                            return _.omit(trigger, ['updated_at', 'created_at'])
+                        }), {
+                            "response_id": deletedReponse.id,
+                            "trigger": "trigger one",
+                            "created_by": "TestUser2",
+                            "chance": 0.03,
+                        }), true);
+                        
+                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                            return _.omit(trigger, ['updated_at', 'created_at'])
+                        }), {
+                            "response_id": deletedReponse.id,
+                            "trigger": "trigger two",
+                            "created_by": "TestUser2",
+                            "chance": 0.43,
+                        }), true);
+                        
+                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                            return _.omit(trigger, ['updated_at', 'created_at'])
+                        }), {
+                            "response_id": deletedReponse.id,
+                            "trigger": "trigger three",
+                            "created_by": "TestUser2",
+                            "chance": 0.93,
+                        }), true);
 
-                        assert.equal(deletedReponse.triggers[1].response_id, deletedReponse.id);
-                        assert.equal(deletedReponse.triggers[1].trigger, 'trigger two');
-                        assert.equal(deletedReponse.triggers[1].created_by, 'TestUser2');
-                        assert.equal(deletedReponse.triggers[1].chance, 0.43);
-                        assert.equal(_.isNull(deletedReponse.triggers[1].updated_at), false);
-                        assert.equal(_.isNull(deletedReponse.triggers[1].created_at), false);
+                        var createdAtValues = _.pluck(deletedReponse.triggers, 'created_at');
+                        var updatedAtValues = _.pluck(deletedReponse.triggers, 'updated_at');
 
-                        assert.equal(deletedReponse.triggers[2].response_id, deletedReponse.id);
-                        assert.equal(deletedReponse.triggers[2].trigger, 'trigger three');
-                        assert.equal(deletedReponse.triggers[2].created_by, 'TestUser2');
-                        assert.equal(deletedReponse.triggers[2].chance, 0.93);
-                        assert.equal(_.isNull(deletedReponse.triggers[2].updated_at), false);
-                        assert.equal(_.isNull(deletedReponse.triggers[2].created_at), false);
+                        assert.equal(createdAtValues.length, 3);
+                        assert.equal(updatedAtValues.length, 3);
+
+                        assert.equal(_.any(createdAtValues, _.isUndefined), false);
+                        assert.equal(_.any(updatedAtValues, _.isUndefined), false);
+
+                        assert.equal(_.any(createdAtValues, _.isNull), false);
+                        assert.equal(_.any(updatedAtValues, _.isNull), false);
+
+                        done();
 
                     });
 
-                }).then(function() {
-                    done();
                 });
 
             });

@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "mocha": "^2.3.3",
-    "tennu-dbcore": "^1.0.6"
+    "tennu-dbcore": "^1.0.6",
+    "lodash": "^3.10.1"
   }
 }

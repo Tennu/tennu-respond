@@ -10,24 +10,31 @@ var responseAddTests = function(dbResponsePromise) {
                 var created_by = 'TestUser';
                 dbResponsePromise.then(function(respond) {
                     return Promise.try(function() {
-                        return respond.add('a', 'c', 0.03, created_by);
+                        return respond.add('a', 'c', 0.04, created_by);
                     }).then(function(newResponse) {
-                        return respond.addTriggers(newResponse.id, 'b', 0.03, created_by);
-                    }).then(function(modifiedResponse) {
+                        return respond.addTriggers(newResponse.id, 'b', 0.04, created_by);
+                    }).then(function(addTriggerResult) {
                         // triggers
-                        assert.equal(modifiedResponse.triggers[0].response_id, modifiedResponse.id);
-                        assert.equal(modifiedResponse.triggers[0].trigger, 'a');
-                        assert.equal(modifiedResponse.triggers[0].created_by, created_by);
-                        assert.equal(_.isNull(modifiedResponse.triggers[0].updated_at), false);
-                        assert.equal(_.isNull(modifiedResponse.triggers[0].created_at), false);
-                        assert.equal(_.isNumber(modifiedResponse.triggers[0].chance), true);
+                        assert.equal(addTriggerResult.triggers[0].response_id, addTriggerResult.id);
+                        assert.equal(addTriggerResult.triggers[0].trigger, 'a');
+                        assert.equal(addTriggerResult.triggers[0].created_by, created_by);
+                        assert.equal(addTriggerResult.triggers[0].chance, 0.04);
+                        assert.equal(_.isNull(addTriggerResult.triggers[0].updated_at), false);
+                        assert.equal(_.isNull(addTriggerResult.triggers[0].created_at), false);
 
-                        assert.equal(modifiedResponse.triggers[1].response_id, modifiedResponse.id);
-                        assert.equal(modifiedResponse.triggers[1].trigger, 'b');
-                        assert.equal(modifiedResponse.triggers[1].created_by, created_by);
-                        assert.equal(_.isNull(modifiedResponse.triggers[1].updated_at), false);
-                        assert.equal(_.isNull(modifiedResponse.triggers[1].created_at), false);
-                        assert.equal(_.isNumber(modifiedResponse.triggers[1].chance), true);
+                        assert.equal(addTriggerResult.triggers[1].response_id, addTriggerResult.id);
+                        assert.equal(addTriggerResult.triggers[1].trigger, 'b');
+                        assert.equal(addTriggerResult.triggers[1].created_by, created_by);
+                        assert.equal(addTriggerResult.triggers[1].chance, 0.04);
+                        assert.equal(_.isNull(addTriggerResult.triggers[1].updated_at), false);
+                        assert.equal(_.isNull(addTriggerResult.triggers[1].created_at), false);
+                        assert.equal(_.isNumber(addTriggerResult.triggers[1].chance), true);
+
+                        assert.equal(_.isEqual(_.omit(addTriggerResult, ['created_at', 'updated_at', 'triggers']), {
+                            id: addTriggerResult.id,
+                            response: addTriggerResult.response,
+                            created_by: addTriggerResult.created_by
+                        }), true);
 
                         done();
                     });

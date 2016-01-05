@@ -30,14 +30,21 @@ var respondCacheIntegration = function(dbResponsePromise) {
 
                             var jsonTriggers = newResponse.related('triggers').toJSON();
 
-                            // Return all cache.triggerCache that exist in jsonTriggers
+                            // Map for mysql returning strings.
+                            _.each(jsonTriggers, function(trigger) {
+                                trigger.chance = parseFloat(trigger.chance)
+                            });
+                            _.each(cache.triggerCache, function(trigger) {
+                                trigger.set('chance', parseFloat(trigger.get('chance')));
+                            });
+
                             return Promise.filter(cache.triggerCache, function(trigger) {
-                                return _.some(jsonTriggers, {
-                                    id: trigger.get('id'),
-                                    trigger: trigger.get('trigger'),
-                                    chance: trigger.get('chance'),
-                                    response_id: trigger.get('response_id'),
-                                    created_by: trigger.get('created_by'),
+                                return _.any(jsonTriggers, {
+                                    "id": trigger.get('id'),
+                                    "trigger": trigger.get('trigger'),
+                                    "chance": trigger.get('chance'),
+                                    "response_id": trigger.get('response_id'),
+                                    "created_by": trigger.get('created_by'),
                                 });
                             });
 
@@ -68,6 +75,14 @@ var respondCacheIntegration = function(dbResponsePromise) {
                             .then(function(newResponse) {
 
                                 var jsonTriggers = newResponse.related('triggers').toJSON();
+
+                                // Map for mysql returning strings.
+                                _.each(jsonTriggers, function(trigger) {
+                                    trigger.chance = parseFloat(trigger.chance)
+                                });
+                                _.each(cache.triggerCache, function(trigger) {
+                                    trigger.set('chance', parseFloat(trigger.get('chance')));
+                                });
 
                                 // Return all cache.triggerCache that exist in jsonTriggers
                                 return Promise.filter(cache.triggerCache, function(trigger) {
