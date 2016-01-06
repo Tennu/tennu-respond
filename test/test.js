@@ -2,12 +2,12 @@ var Promise = require('bluebird');
 
 var client = require('./mock-client');
 var dbcoreModule = require('tennu-dbcore');
-var plugin = require('../plugin');
 
 var respondTests = require("./respond");
 var cacheTests = require("./cache");
 var respondCacheIntegrationTests = require("./respond-cache-integration");
 var pluginRespondIntegrationTests = require("./plugin-respond-integration");
+var variableFormatTests = require('./variable-format');
 
 if (process.env.NODE_ENV === 'development') {
     dbcoreModule = require('../../tennu-dbcore/plugin.js');
@@ -21,6 +21,8 @@ var imports = {
         }
     }
 };
+
+var plugin = require('../plugin').init(client, imports);
 
 // init response
 const dbResponsePromise = imports.dbcore.then(function(knex) {
@@ -42,4 +44,6 @@ cacheTests(dbResponsePromise);
 
 respondCacheIntegrationTests(dbResponsePromise);
 
-pluginRespondIntegrationTests(dbResponsePromise, plugin.init(client, imports));
+pluginRespondIntegrationTests(dbResponsePromise, plugin);
+
+variableFormatTests();

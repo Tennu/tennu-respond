@@ -20,6 +20,23 @@ Maintains trigger words that will fire pre-determined responses. Can be set to o
 }
 ```
 
+### Special features
+In the response you can use something called 'intent modifiers' and instead of the bot simply saying something to the channel, you can have the bot act, notice, and say as many times as you want in a single response.
+
+So: ```!respond add -c=1 my trigger/my response%act%claps hands```
+
+will result in the bot replying 'my response' and immediately after replying with an '/me claps hands'
+
+You can start to see how useful this is. A single response can then turn into a multi-line response with all sorts of actions.
+
+There are more to come, but currently here are the modifiers.
+
+- %say%
+- %act%
+- %notice%
+- %rainbow%
+
+
 ### Requires
 - [tennu-dblogger](https://github.com/LordWingZero/tennu-dblogger)
   - [tennu-dbcore](https://github.com/LordWingZero/tennu-dbcore)

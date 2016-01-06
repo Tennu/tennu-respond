@@ -3,7 +3,9 @@ var format = require('util').format;
 var Promise = require('bluebird');
 var clamp = require('clamp');
 var _ = require('lodash');
+
 var haste = require('./lib/haste');
+var intentModifierFormat = require('./lib/intent-modifier-format');
 var modelFormat = require('./lib/model-format');
 var validators = require('./lib/validators');
 
@@ -70,6 +72,16 @@ var TennuRespond = {
                     })
                     .then(function(responses) {
                         return _.pluck(responses, 'response');
+                    })
+                    .then(function(responseTexts){
+                        return intentModifierFormat.parse(responseTexts);
+                    })
+                    .then(function(formattedResponses){
+                        Promise.each(formattedResponses, function(intentArray){
+                            return Promise.each(intentArray, function(intent){
+                                client[intent.intent](IRCMessage.channel, intent.message);
+                            });
+                        });
                     })
                     .catch(function(err) {
                         if (err.type !== 'respond.notriggerpassedchancecheck' && err.type !== 'respond.notrigger') {

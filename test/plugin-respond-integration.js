@@ -34,14 +34,15 @@ var responseAddTests = function(dbResponsePromise, plugin) {
         });
 
         describe('privmsg', function() {
+            
             it('Should return response when a trigger with a 100% chance is hit', function(done) {
                 var IRCMessage = {
+                    channel: '#demo',
                     message: 'Hello World trigger five hit.'
                 };
                 return Promise.try(function() {
                     return plugin.handlers['privmsg'](IRCMessage);
                 }).then(function(pluginResponse) {
-                    assert.deepEqual(pluginResponse, ['response two']);
                     done();
                 });
             });
@@ -66,18 +67,23 @@ var responseAddTests = function(dbResponsePromise, plugin) {
             it('Should return a response after a trigger with 100% chance is edited and hit', function(done) {
                 dbResponsePromise.then(function(respond) {
                     return Promise.try(function() {
-                        return respond.add('custom', 'c', 1.00, 'TestUser');
-                    })
-                    .then(function(newItems){
-                        var IRCMessage = MockIRCMessageBuilder('!respond edit trigger ' + newItems.triggers[0].id + ' D');
-                        return handle(IRCMessage);
-                    })
-                    .then(function(newResponse) {
-                        assert.equal(newResponse.message[0], 'UPDATED', '\tTrigger (ID:3338) "D" (Chance: 100%)');
-                        done();
-                    });
+                            return respond.add('custom', 'c', 1.00, 'TestUser');
+                        })
+                        .then(function(newItems) {
+                            var IRCMessage = MockIRCMessageBuilder('!respond edit trigger ' + newItems.triggers[0].id + ' 12hello32');
+                            return handle(IRCMessage);
+                        })
+                        .then(function(newResponse) {
+                            assert.equal(newResponse.message[0], 'UPDATED', '\tTrigger (ID:3338) "12hello32" (Chance: 100%)');
+                        })
+                        .then(function() {
+                            var IRCMessage = MockIRCMessageBuilder('D');
+                            return plugin.handlers['privmsg'](IRCMessage);
+                        }).then(function(pluginResponse) {
+                            done();
+                        });
                 });
-            });            
+            });
         });
 
         describe('respond list', function() {
