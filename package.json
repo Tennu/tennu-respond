@@ -19,6 +19,7 @@
     "checkit": "^0.6.0",
     "clamp": "git+https://github.com/LordWingZero/clamp.git",
     "error": "^7.0.2",
+    "irc-formatters": "^2.1.0",
     "lodash": "^3.10.1",
     "minimist": "^1.2.0",
     "moment": "^2.10.6",
