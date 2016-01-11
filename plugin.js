@@ -27,6 +27,11 @@ const responseEditArgs = {
 };
 
 var TennuRespond = {
+    configDefaults: {
+        "respond": {
+            "defaultChance": 0.3
+        },
+    },
     requiresRoles: ["dbcore"],
     init: function(client, imports) {
 
@@ -38,10 +43,6 @@ var TennuRespond = {
         });
 
         var respondConfig = client.config("respond");
-
-        if (!respondConfig || !respondConfig.hasOwnProperty("defaultChance")) {
-            throw Error("respond is missing some or all of its configuration.");
-        }
 
         /**
          * Handles parsing subcommands out of !respond.
@@ -73,12 +74,12 @@ var TennuRespond = {
                     .then(function(responses) {
                         return _.pluck(responses, 'response');
                     })
-                    .then(function(responseTexts){
+                    .then(function(responseTexts) {
                         return intentModifierFormat.parse(responseTexts);
                     })
-                    .then(function(formattedResponses){
-                        Promise.each(formattedResponses, function(intentArray){
-                            return Promise.each(intentArray, function(intent){
+                    .then(function(formattedResponses) {
+                        Promise.each(formattedResponses, function(intentArray) {
+                            return Promise.each(intentArray, function(intent) {
                                 client[intent.intent](IRCMessage.channel, intent.message);
                             });
                         });
@@ -177,9 +178,9 @@ var TennuRespond = {
             var respondType = sargs._[1];
             var ID = sargs._[2];
             var text = sargs._.slice(3, sargs._.length).join(' ');
-            
+
             var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
-            if(!_.isUndefined(chance)){
+            if (!_.isUndefined(chance)) {
                 chance = clamp.prototype.saturate(chance);
             }
 
