@@ -18,7 +18,8 @@ function logger() {
 function config(value) {
     var cfg = {
         "respond": {
-            "defaultChance": 0.3
+            "defaultChance": 0.3,
+            "no-admin": true,
         },
         "database": {
             "client": "sqlite3",

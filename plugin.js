@@ -3,6 +3,7 @@ var format = require('util').format;
 var Promise = require('bluebird');
 var clamp = require('clamp');
 var _ = require('lodash');
+var splitSlash = require('split-fwd-slash');
 
 var haste = require('./lib/haste');
 var intentModifierFormat = require('./lib/intent-modifier-format');
@@ -29,10 +30,16 @@ const responseEditArgs = {
 var TennuRespond = {
     configDefaults: {
         "respond": {
-            "defaultChance": 0.3
+            "default-chance": 0.3,
+            "no-admin": false,
+            "denied-response": {
+                "intent": "notice",
+                "query": true,
+                "message": "Admin only command."
+            }
         },
     },
-    requiresRoles: ["dbcore"],
+    requiresRoles: ["dbcore", "admin"],
     init: function(client, imports) {
 
         const dbResponsePromise = imports.dbcore.then(function(knex) {
@@ -49,20 +56,28 @@ var TennuRespond = {
          **/
         function respondRouter() {
             return function(IRCMessage) {
-                switch (IRCMessage.args[0]) {
-                    case 'list':
-                        return list(IRCMessage);
-                    case 'remove':
-                        return remove(IRCMessage);
-                    case 'edit':
-                        return edit(IRCMessage);
-                    case 'add':
-                        return add(IRCMessage);
-                    case 'addtriggers':
-                        return addtriggers(IRCMessage);
-                    default:
-                        return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
-                }
+                return imports.admin.isAdmin(IRCMessage.hostmask)
+                    .then(function(isAdmin) {
+                        if (!isAdmin && respondConfig["no-admin"] === false) {
+                            console.log('DENIED');
+                            console.log(respondConfig["denied-response"]);
+                            return respondConfig["denied-response"];
+                        }
+                        switch (IRCMessage.args[0]) {
+                            case 'list':
+                                return list(IRCMessage);
+                            case 'remove':
+                                return remove(IRCMessage);
+                            case 'edit':
+                                return edit(IRCMessage);
+                            case 'add':
+                                return add(IRCMessage);
+                            case 'addtriggers':
+                                return addtriggers(IRCMessage);
+                            default:
+                                return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
+                        }
+                    });
             };
         }
 
@@ -179,7 +194,7 @@ var TennuRespond = {
             var ID = sargs._[2];
             var text = sargs._.slice(3, sargs._.length).join(' ');
 
-            var chance = _.get(sargs, 'chance', respondConfig.defaultChance);
+            var chance = _.get(sargs, 'chance', respondConfig["default-chance"]);
             if (!_.isUndefined(chance)) {
                 chance = clamp.prototype.saturate(chance);
             }
@@ -222,11 +237,11 @@ var TennuRespond = {
 
             var sargs = parseArgs(IRCMessage.args, responseEditArgs);
 
-            var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
+            var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig["default-chance"]));
             var stringStart = (IRCMessage.message.indexOf('add') + 4);
             var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
             var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
-            var choppedText = trimmedAndFilteredStr.split('/');
+            var choppedText = splitSlash(trimmedAndFilteredStr);
 
             var cleanedTriggers = _(choppedText).map(_.trim).value();
 
@@ -280,12 +295,12 @@ var TennuRespond = {
 
                     var sargs = parseArgs(IRCMessage.args, responseEditArgs);
 
-                    var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig.defaultChance));
+                    var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig["default-chance"]));
 
                     var stringStart = (IRCMessage.message.indexOf(responseID) + responseID.length);
                     var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
                     var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
-                    var choppedText = trimmedAndFilteredStr.split('/')
+                    var choppedText = splitSlash(trimmedAndFilteredStr);
 
                     var cleanedTriggers = _(choppedText).map(_.trim).value();
 

@@ -426,7 +426,7 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                         return handle(IRCMessage);
                     }).then(function(pluginResponse) {
                         _isNotice(pluginResponse);
-                        assert.equal(pluginResponse.message, 'Trigger or response missing.');
+                        assert.equal(pluginResponse.message, 'At least one trigger is required. See "!help respond add"');
                         done();
                     });
                 });
@@ -491,7 +491,7 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                         return handle(IRCMessage);
                     }).then(function(pluginResponse) {
                         _isNotice(pluginResponse);
-                        assert.equal(pluginResponse.message, 'Trigger or response missing.');
+                        assert.equal(pluginResponse.message, 'Invalid response ID.');
                         done();
                     });
                 });
