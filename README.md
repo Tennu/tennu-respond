@@ -35,6 +35,7 @@ There are more to come, but currently here are the modifiers.
 - %act%
 - %notice%
 - %rainbow%
+- %nick%: bot output will swap this for a username.
 
 
 ### Requires

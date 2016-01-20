@@ -6,7 +6,7 @@ var _ = require('lodash');
 var splitSlash = require('split-fwd-slash');
 
 var haste = require('./lib/haste');
-var intentModifierFormat = require('./lib/intent-modifier-format');
+var responseModifierFormat = require('./lib/response-modifier-format');
 var modelFormat = require('./lib/model-format');
 var validators = require('./lib/validators');
 
@@ -90,7 +90,7 @@ var TennuRespond = {
                         return _.pluck(responses, 'response');
                     })
                     .then(function(responseTexts) {
-                        return intentModifierFormat.parse(responseTexts);
+                        return responseModifierFormat.parse(responseTexts, IRCMessage);
                     })
                     .then(function(formattedResponses) {
                         Promise.each(formattedResponses, function(intentArray) {

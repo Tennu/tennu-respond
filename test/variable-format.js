@@ -1,6 +1,6 @@
 var assert = require("assert");
 var _ = require('lodash');
-var intentModifierFormat = require('../lib/intent-modifier-format');
+var intentModifierFormat = require('../lib/response-modifier-format');
 
 function tests() {
     describe('Variable formatter', function() {
