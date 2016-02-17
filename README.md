@@ -35,6 +35,7 @@ There are more to come, but currently here are the modifiers.
 - %act%
 - %notice%
 - %rainbow%
+- %private%: Sends a PM to the user who triggered the trigger
 - %nick%: bot output will swap this for a username.
 
 

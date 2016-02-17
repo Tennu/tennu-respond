@@ -95,7 +95,7 @@ var TennuRespond = {
                     .then(function(formattedResponses) {
                         Promise.each(formattedResponses, function(intentArray) {
                             return Promise.each(intentArray, function(intent) {
-                                client[intent.intent](IRCMessage.channel, intent.message);
+                                client[intent.intent](intent.target, intent.message);
                             });
                         });
                     })
