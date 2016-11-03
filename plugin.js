@@ -59,8 +59,6 @@ var TennuRespond = {
                 return imports.admin.isAdmin(IRCMessage.hostmask)
                     .then(function(isAdmin) {
                         if (!isAdmin && respondConfig["no-admin"] === false) {
-                            console.log('DENIED');
-                            console.log(respondConfig["denied-response"]);
                             return respondConfig["denied-response"];
                         }
                         switch (IRCMessage.args[0]) {
