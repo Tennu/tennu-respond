@@ -1,6 +1,24 @@
 var assert = require('assert');
 var _ = require('lodash');
 
+var clientConfiguration = {
+    "admin-failed-attempt-response": "Permission denied.",
+    "admins": [{
+        "hostname": "admin.admin.admin"
+    }],
+    "respond": {
+        "defaultChance": 0.3,
+        "no-admin": true,
+    },
+    "database": {
+        "client": "sqlite3",
+        "debug": false,
+        "connection": {
+            "filename": "./test/Respond.tests.sqlite"
+        }
+    }
+};
+
 function logger() {
     return {
         "notice": function(text) {
@@ -16,20 +34,7 @@ function logger() {
 }
 
 function config(value) {
-    var cfg = {
-        "respond": {
-            "defaultChance": 0.3,
-            "no-admin": true,
-        },
-        "database": {
-            "client": "sqlite3",
-            "debug": false,
-            "connection": {
-                "filename": "./test/Respond.tests.sqlite"
-            }
-        }
-    };
-    return cfg[value];
+    return clientConfiguration[value];
 }
 
 function makeParamFilledAssertions(target, messages) {
@@ -55,8 +60,12 @@ function notice(target, messages) {
 
 module.exports = {
     "config": config,
+    "clientConfiguration": clientConfiguration,
     "_logger": logger(),
     "say": say,
     "act": act,
-    "notice": notice
+    "notice": notice,
+    "error": logger().error,
+    "note": logger().notice,
+    "debug": logger().debug
 };

@@ -137,7 +137,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                         })
                         .then(function(deletedTrigger) {
                             return new respond.Trigger({
-                                    id: deletedTrigger.id
+                                    id: deletedTrigger.trigger.id
                                 })
                                 .fetch({
                                     require: true

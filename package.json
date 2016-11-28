@@ -1,6 +1,6 @@
 {
   "name": "tennu-respond",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
   "main": "plugin.js",
   "repository": {
@@ -27,8 +27,13 @@
     "split-fwd-slash": "^1.0.1"
   },
   "devDependencies": {
+    "lodash": "^3.10.1",
     "mocha": "^2.3.3",
-    "tennu-dbcore": "^1.0.6",
-    "lodash": "^3.10.1"
+    "sqlite3": "^3.1.8",
+    "tennu-admin": "^4.0.1",
+    "tennu-dbcore": "^1.0.6"
+  },
+  "peerDependencies": {
+    "tennu-dbcore": "^2"
   }
 }

@@ -1,6 +1,6 @@
 var _ = require("lodash");
 
-var responseTryEmit = require("./respond-try-emit")
+var responseTryEmit = require("./respond-try-emit");
 var responseAdd = require("./respond-add");
 var responseAddTriggers = require("./respond-add-triggers");
 var responseRemove = require("./respond-remove");

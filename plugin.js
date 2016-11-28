@@ -1,5 +1,6 @@
 var parseArgs = require("minimist");
 var format = require('util').format;
+var path = require('path');
 var Promise = require('bluebird');
 var clamp = require('clamp');
 var _ = require('lodash');
@@ -42,8 +43,12 @@ var TennuRespond = {
     requiresRoles: ["dbcore", "admin"],
     init: function(client, imports) {
 
-        const dbResponsePromise = imports.dbcore.then(function(knex) {
-            // response.js will return a promise as it fetches all responses
+        var knex = imports.dbcore.knex;
+
+        var dbResponsePromise = knex.migrate.latest({
+            tableName: 'tennu_respond_knex_migrations',
+            directory: path.join(__dirname, 'migrations')
+        }).then(function() {
             return require('./lib/respond')(knex, client._logger.notice, client._logger.debug).then(function(respond) {
                 return respond;
             });
@@ -56,27 +61,31 @@ var TennuRespond = {
          **/
         function respondRouter() {
             return function(IRCMessage) {
-                return imports.admin.isAdmin(IRCMessage.hostmask)
-                    .then(function(isAdmin) {
-                        if (!isAdmin && respondConfig["no-admin"] === false) {
-                            return respondConfig["denied-response"];
-                        }
-                        switch (IRCMessage.args[0]) {
-                            case 'list':
-                                return list(IRCMessage);
-                            case 'remove':
-                                return remove(IRCMessage);
-                            case 'edit':
-                                return edit(IRCMessage);
-                            case 'add':
-                                return add(IRCMessage);
-                            case 'addtriggers':
-                                return addtriggers(IRCMessage);
-                            default:
-                                return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
-                        }
-                    });
-            };
+                
+                if (respondConfig["no-admin"] === true){
+                    return router(IRCMessage);
+                }
+                
+                return imports.admin.requiresAdmin(router)(IRCMessage);
+
+                function router(privmsg) {
+
+                    switch (privmsg.args[0]) {
+                        case 'list':
+                            return list(privmsg);
+                        case 'remove':
+                            return remove(privmsg);
+                        case 'edit':
+                            return edit(privmsg);
+                        case 'add':
+                            return add(privmsg);
+                        case 'addtriggers':
+                            return addtriggers(privmsg);
+                        default:
+                            return _getNotice('Subcommand for respond not found. See !help respond and check your PMs.')
+                    }
+                }
+            }
         }
 
         function emitResponse() {

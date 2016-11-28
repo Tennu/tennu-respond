@@ -2,19 +2,8 @@ var assert = require("assert");
 var _ = require("lodash");
 var Promise = require('bluebird');
 var MockIRCMessageBuilder = require('./mock-irccommand-builder');
-
-function commandHandler(plugin) {
-    return function(IRCMessage) {
-        return plugin.handlers[IRCMessage.command](IRCMessage);
-    };
-};
-
-function _isNotice(object) {
-    assert.equal(_.isEqual(_.omit(object, 'message'), {
-        intent: 'notice',
-        query: true
-    }), true, 'Object recieved back is NOT a tennu notice response');
-}
+var commandHandler = require("./command-handler");
+var _isNotice = require("./is-notice");
 
 var responseAddTests = function(dbResponsePromise, plugin) {
 
