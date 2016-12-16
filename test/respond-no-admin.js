@@ -8,12 +8,39 @@ var isNotice = require('./is-notice');
 var responseNoAdminTests = function(dbResponsePromise, plugin, client, imports) {
 
     var handle = commandHandler(plugin);
-    //var adminOnlyPlugin = rfr('./plugin').init(client, imports);
+
+    function executeRespondList() {
+        var IRCMessage = MockIRCMessageBuilder('!respond list');
+
+        return Promise.try(function() {
+                return handle(IRCMessage);
+            })
+            .then(function(pluginResponse) {
+                assert.equal(pluginResponse, 'Permission denied.');
+            });
+    }
 
     describe('respond no-admin', function() {
 
         after(function() {
             client.clientConfiguration.respond["no-admin"] = true;
+        });
+
+        describe('no-admin === undefined', function() {
+
+            before(function() {
+                client.clientConfiguration.respond["no-admin"] = undefined;
+            });
+
+            it('Should deny access to non-admins.', function(done) {
+                
+                executeRespondList()
+                    .then(function() {
+                        done();
+                    });
+                    
+            });
+
         });
 
         describe('no-admin === false', function() {
@@ -24,14 +51,7 @@ var responseNoAdminTests = function(dbResponsePromise, plugin, client, imports) 
 
             it('Should deny access to non-admins.', function(done) {
 
-                var IRCMessage = MockIRCMessageBuilder('!respond list');
-
-                return Promise.try(function() {
-                        return handle(IRCMessage);
-                    })
-                    .then(function(pluginResponse) {
-                        assert.equal(pluginResponse, 'Permission denied.');
-                    })
+                executeRespondList()
                     .then(function() {
                         done();
                     });

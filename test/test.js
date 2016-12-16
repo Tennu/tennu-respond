@@ -13,10 +13,14 @@ var variableFormatTests = require('./variable-format');
 
 if (process.env.NODE_ENV === 'development') {
     
+    console.log('NODE_ENV=development.\n');
+    
     console.log('Using tennu-dbcore locally. (useful if youre not using the npm registry version)');
     dbcoreModule = require('../../tennu-dbcore/plugin.js');
+    
     console.log('Using tennu-admin locally. (useful if youre not using the npm registry version)');
     adminModule = require("../../tennu-admin/plugin.js");
+    
 } else {
     dbcoreModule = require('tennu-dbcore');
     adminModule = require("tennu-admin");
