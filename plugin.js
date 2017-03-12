@@ -6,7 +6,6 @@ var clamp = require('clamp');
 var _ = require('lodash');
 var splitSlash = require('split-fwd-slash');
 
-var haste = require('./lib/haste');
 var responseModifierFormat = require('./lib/response-modifier-format');
 var modelFormat = require('./lib/model-format');
 var validators = require('./lib/validators');
@@ -33,6 +32,7 @@ var TennuRespond = {
         "respond": {
             "default-chance": 0.3,
             "no-admin": false,
+            "hastebin-server": "https://hastebin.com/",
             "denied-response": {
                 "intent": "notice",
                 "query": true,
@@ -56,16 +56,18 @@ var TennuRespond = {
 
         var respondConfig = client.config("respond");
 
+        var haste = require('./lib/haste')(respondConfig["hastebin-server"]);
+
         /**
          * Handles parsing subcommands out of !respond.
          **/
         function respondRouter() {
             return function(IRCMessage) {
-                
-                if (respondConfig["no-admin"] === true){
+
+                if (respondConfig["no-admin"] === true) {
                     return router(IRCMessage);
                 }
-                
+
                 return imports.admin.requiresAdmin(router)(IRCMessage);
 
                 function router(privmsg) {
@@ -144,7 +146,7 @@ var TennuRespond = {
                             return _getNotice(err)
                         })
                         .then(function(hasteKey) {
-                            return _getNotice('https://hastebin.com/' + hasteKey);
+                            return _getNotice(respondConfig["hastebin-server"] + hasteKey);
                         });
                 });
             });

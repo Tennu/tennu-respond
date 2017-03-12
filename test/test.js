@@ -37,7 +37,9 @@ var imports = {
     }).exports
 };
 
-var plugin = require('../plugin').init(client, imports);
+var pluginToLoad = require('../plugin');
+client.pluginDefaultConfig = pluginToLoad.configDefaults;
+var plugin = pluginToLoad.init(client, imports);
 
 // init response
 // response.js will return a promise as it fetches all responses

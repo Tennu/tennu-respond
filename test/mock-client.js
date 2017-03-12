@@ -8,6 +8,7 @@ var clientConfiguration = {
     }],
     "respond": {
         "defaultChance": 0.3,
+        "hastebin-server": "https://hastebin.com/",
         "no-admin": true,
     },
     "database": {
@@ -34,6 +35,9 @@ function logger() {
 }
 
 function config(value) {
+    if(this.pluginDefaultConfig) {
+        return _.assign(clientConfiguration[value], this.pluginDefaultConfig.respond);
+    }
     return clientConfiguration[value];
 }
 
