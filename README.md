@@ -5,8 +5,8 @@ A plugin for the [tennu](https://github.com/Tennu/tennu) irc framework.
 Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally. Compatible with [tennu-admin-cooldown](https://github.com/LordWingZero/tennu-admin-cooldown).
 
 ### Usage
-- ```"{{!}}respond add [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>"```
-- ```"{{!}}respond addtriggers <Response_ID> [-c=.3] <text>"```
+- ```"{{!}}respond add [-c=.3] [--executable] <trigger>[/<trigger>/<trigger>]/<response>"```
+- ```"{{!}}respond addtriggers <Response_ID> [-c=.3] [--executable] <text>"```
 - ```"{{!}}respond edit <type> <type_ID> [-c=.3] <new_text>"```
 - ```"{{!}}respond remove <type> <type_ID>"```
 - ```"{{!}}respond list"```
@@ -21,6 +21,13 @@ Maintains trigger words that will fire pre-determined responses. Can be set to o
 ```
 
 ### Special features
+
+#### Executable
+
+Responses can be executed as child_process exec commands and stdout is returned. use the --executable flag when adding or editing responses.
+
+#### Intent modifiers
+
 In the response you can use something called 'intent modifiers' and instead of the bot simply saying something to the channel, you can have the bot act, notice, and say as many times as you want in a single response.
 
 So: ```!respond add -c=1 my trigger/my response%act%claps hands```
