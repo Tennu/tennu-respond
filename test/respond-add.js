@@ -46,6 +46,24 @@ var responseAddTests = function(dbResponsePromise) {
                         done();
                     });
             });
+            it('New response is not executable', function(done) {
+                dbResponsePromise.then(function(respond) {
+                        return respond.add('d', 'e', 0.03, 'test_user');
+                    })
+                    .then(function(newResponse) {
+                        assert.equal(newResponse.executable, 0);
+                        done();
+                    });
+            });
+            it('New response is executable', function(done) {
+                dbResponsePromise.then(function(respond) {
+                        return respond.add('d', 'e', 0.03, 'test_user', true);
+                    })
+                    .then(function(newResponse) {
+                        assert.equal(newResponse.executable, 1);
+                        done();
+                    });
+            });            
             it('Refetch should confirm add', function(done) {
                 dbResponsePromise.then(function(respond) {
                     return Promise.try(function() {

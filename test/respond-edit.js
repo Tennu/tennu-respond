@@ -70,6 +70,33 @@ var responseEditTests = function(dbResponsePromise) {
                     });
                 });
 
+                it('Should update a response and mark it executable', function(done) {
+                    dbResponsePromise.then(function(respond) {
+                        return Promise.try(function() {
+                            return new respond.Response({
+                                'response': 'response three'
+                            }).fetch({
+                                require: true
+                            });
+                        }).then(function(response) {
+                            return respond.edit('response', response.id, 'custom response three', response.chance, true);
+                        }).then(function(modifiedReponse) {
+
+                            return new respond.Response({
+                                'response': 'custom response three'
+                            }).fetch({
+                                require: true
+                            }).then(function(model) {
+                                assert.equal(modifiedReponse.executable, model.get('executable'))
+                                assert.ok(model);
+                            });
+
+                        }).then(function() {
+                            done();
+                        });
+                    });
+                });
+
             });
 
             describe('Invalid usage', function() {
