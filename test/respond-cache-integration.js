@@ -39,7 +39,7 @@ var respondCacheIntegration = function(dbResponsePromise) {
                             });
 
                             return Promise.filter(cache.triggerCache, function(trigger) {
-                                return _.any(jsonTriggers, {
+                                return _.some(jsonTriggers, {
                                     "id": trigger.get('id'),
                                     "trigger": trigger.get('trigger'),
                                     "chance": trigger.get('chance'),
@@ -135,7 +135,7 @@ var respondCacheIntegration = function(dbResponsePromise) {
                                 return respond.removeTrigger(triggerId);
                             }).then(function(deletedTrigger) {
                                 // We shouldt find ANY triggers that match the deleted response_id.
-                                assert.equal(_.some(cache.triggerCache, 'id', deletedTrigger), false);
+                                assert.equal(_.some(_.map(cache.triggerCache, 'id'), deletedTrigger), false);
                                 done();
                             });
                         })

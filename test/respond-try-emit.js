@@ -15,7 +15,7 @@ var responseAddTests = function(dbResponsePromise) {
                                 return respond.tryEmit('hello my custom world.');
                             }).then(function(hits) {
                                 assert.equal(hits.length, 1);
-                                assert.deepEqual(_.omit(hits[0], ['created_at', 'updated_at']), {
+                                assert.deepEqual(_.omit(hits[0], ['created_at', 'updated_at', 'executable']), {
                                     id: newResponse.id,
                                     response: 'c',
                                     created_by: 'TestUser'

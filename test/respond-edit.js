@@ -100,7 +100,7 @@ var responseEditTests = function(dbResponsePromise) {
                                 return respond.edit('response', response.id, '');
                             }).then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.response.errors, {
+                                assert.equal(_.some(e.errors.response.errors, {
                                     rule: 'required'
                                 }), true);
                             })
@@ -122,7 +122,7 @@ var responseEditTests = function(dbResponsePromise) {
                                 return respond.edit('response', response.id, undefined);
                             }).then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.response.errors, {
+                                assert.equal(_.some(e.errors.response.errors, {
                                     rule: 'required'
                                 }), true);
                             })
@@ -144,7 +144,7 @@ var responseEditTests = function(dbResponsePromise) {
                                 return respond.edit('response', response.id, null);
                             }).then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.response.errors, {
+                                assert.equal(_.some(e.errors.response.errors, {
                                     rule: 'required'
                                 }), true);
                             })

@@ -69,7 +69,7 @@ var responseNoAdminTests = function(dbResponsePromise, plugin, client, imports) 
                     })
                     .then(function(pluginResponse) {
                         isNotice(pluginResponse);
-                        assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true);
+                        assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true, 'Hastebin might be down.');
                     })
                     .then(function() {
                         done();

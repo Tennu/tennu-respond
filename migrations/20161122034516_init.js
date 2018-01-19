@@ -17,7 +17,7 @@ exports.up = function(knex, Promise) {
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTableIfExists("respond").then(function(){
+  return knex.schema.dropTableIfExists("response").then(function(){
       return knex.schema.dropTableIfExists("trigger");
   });
 };

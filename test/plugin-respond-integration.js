@@ -23,7 +23,6 @@ var responseAddTests = function(dbResponsePromise, plugin) {
         });
 
         describe('privmsg', function() {
-            
             it('Should return response when a trigger with a 100% chance is hit', function(done) {
                 var IRCMessage = {
                     channel: '#demo',
@@ -439,14 +438,51 @@ var responseAddTests = function(dbResponsePromise, plugin) {
                 });
             });
             describe('Valid usage', function() {
-                it('Should add two triggers and a response with a 100% chance', function(done) {
-                    var IRCMessage = MockIRCMessageBuilder('!respond add -c=1.00 1 a/2-/--3 b ');
+                it('Should add two triggers and a non-executable response with a 100% chance', function(done) {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add -c=1.00 1 a/2-/--3 b '); 
                     return Promise.try(function() {
                         return handle(IRCMessage);
                     }).then(function(pluginResponse) {
                         _isNotice(pluginResponse);
                         assert.equal(pluginResponse.message[0], 'ADDED');
                         assert.equal(pluginResponse.message.length, 4);
+                        assert.ok(pluginResponse.message[1].indexOf('Executable: false') > -1);
+                        done();
+                    });
+                });
+                it('Should add two triggers and a executable response with a 100% chance with executable flag after chance flag', function(done) {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add -c=1.00 --e 1 a/2-/--3 b '); 
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        _isNotice(pluginResponse);
+                        assert.equal(pluginResponse.message[0], 'ADDED');
+                        assert.equal(pluginResponse.message.length, 4);
+                        assert.ok(pluginResponse.message[1].indexOf('Executable: true') > -1);
+                        done();
+                    });
+                });    
+                it('Should add two triggers and a non-executable response with a 100% chance with executable flag before chance flag', function(done) {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add --e -c=1.00 1 a/2-/--3 b '); 
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        _isNotice(pluginResponse);
+                        assert.equal(pluginResponse.message[0], 'ADDED');
+                        assert.equal(pluginResponse.message.length, 4);
+                        assert.ok(pluginResponse.message[1].indexOf('Executable: true') > -1);
+                        done();
+                    });
+                });
+                it('Should add two triggers and a non-executable response with a 100% chance with executable flag alias', function(done) {
+                    var IRCMessage = MockIRCMessageBuilder('!respond add --executable -c=1.00 1 a/2-/--3 b '); 
+                    return Promise.try(function() {
+                        return handle(IRCMessage);
+                    }).then(function(pluginResponse) {
+                        _isNotice(pluginResponse);
+                        assert.equal(pluginResponse.message[0], 'ADDED');
+                        assert.equal(pluginResponse.message.length, 4);
+                        assert.ok(pluginResponse.message[1].indexOf('Executable: true') > -1);
                         done();
                     });
                 });

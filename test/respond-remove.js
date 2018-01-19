@@ -40,7 +40,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                         assert.equal(_.isNull(deletedReponse.updated_at), false);
                         assert.equal(_.isNull(deletedReponse.created_at), false);
 
-                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                        assert.equal(_.some(_.map(deletedReponse.triggers, function(trigger) {
                             return _.omit(trigger, ['updated_at', 'created_at'])
                         }), {
                             "response_id": deletedReponse.id,
@@ -49,7 +49,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                             "chance": 0.03,
                         }), true);
                         
-                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                        assert.equal(_.some(_.map(deletedReponse.triggers, function(trigger) {
                             return _.omit(trigger, ['updated_at', 'created_at'])
                         }), {
                             "response_id": deletedReponse.id,
@@ -58,7 +58,7 @@ var responseRemoveTests = function(dbResponsePromise) {
                             "chance": 0.43,
                         }), true);
                         
-                        assert.equal(_.any(_.map(deletedReponse.triggers, function(trigger) {
+                        assert.equal(_.some(_.map(deletedReponse.triggers, function(trigger) {
                             return _.omit(trigger, ['updated_at', 'created_at'])
                         }), {
                             "response_id": deletedReponse.id,
@@ -67,17 +67,17 @@ var responseRemoveTests = function(dbResponsePromise) {
                             "chance": 0.93,
                         }), true);
 
-                        var createdAtValues = _.pluck(deletedReponse.triggers, 'created_at');
-                        var updatedAtValues = _.pluck(deletedReponse.triggers, 'updated_at');
+                        var createdAtValues = _.map(deletedReponse.triggers, 'created_at');
+                        var updatedAtValues = _.map(deletedReponse.triggers, 'updated_at');
 
                         assert.equal(createdAtValues.length, 3);
                         assert.equal(updatedAtValues.length, 3);
 
-                        assert.equal(_.any(createdAtValues, _.isUndefined), false);
-                        assert.equal(_.any(updatedAtValues, _.isUndefined), false);
+                        assert.equal(_.some(createdAtValues, _.isUndefined), false);
+                        assert.equal(_.some(updatedAtValues, _.isUndefined), false);
 
-                        assert.equal(_.any(createdAtValues, _.isNull), false);
-                        assert.equal(_.any(updatedAtValues, _.isNull), false);
+                        assert.equal(_.some(createdAtValues, _.isNull), false);
+                        assert.equal(_.some(updatedAtValues, _.isNull), false);
 
                         done();
 

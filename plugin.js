@@ -5,6 +5,7 @@ var Promise = require('bluebird');
 var clamp = require('clamp');
 var _ = require('lodash');
 var splitSlash = require('split-fwd-slash');
+var exec = require('child-process-promise').exec;
 
 var responseModifierFormat = require('./lib/response-modifier-format');
 var modelFormat = require('./lib/model-format');
@@ -21,10 +22,12 @@ const _getNotice = function(message) {
     };
 };
 
-const responseEditArgs = {
+const responseAddEditArgs = {
     alias: {
-        'c': 'chance'
-    }
+        'c': 'chance',
+        'e': ['executable', 'execute', 'exec']
+    },
+    boolean: 'e'
 };
 
 var TennuRespond = {
@@ -96,10 +99,39 @@ var TennuRespond = {
                         return respond.tryEmit(IRCMessage.message)
                     })
                     .then(function(responses) {
-                        return _.pluck(responses, 'response');
-                    })
-                    .then(function(responseTexts) {
-                        return responseModifierFormat.parse(responseTexts, IRCMessage);
+
+                        var executableResponses = _.filter(responses, { 'executable': 1 });
+                        var responsesToReturn = _.map(_.filter(responses, { 'executable': 0 }), 'response');
+
+                        // Todo, move to function?
+                        return Promise.each(executableResponses, function(item) {
+                                return exec(item.response)
+                                    .then(function(execResult) {
+                                        
+                                        var stdout = execResult.stdout;
+                                        var stderr = execResult.stderr;
+
+                                        if(stderr)
+                                        {
+                                            throw Error(stderr);
+                                        }
+                                        
+                                        var cleanedOutput = stdout.split('\n');
+                                        responsesToReturn.push(...cleanedOutput);
+                                        
+                                    })
+                                    .catch(function(stderr) {
+                                        client.notice(IRCMessage.nickname, [
+                                            'The executable response failed to execute.',
+                                            stderr
+                                        ]);
+                                        client._logger.error(stderr);
+                                    });
+                            })
+                            .then(function() {
+                                return responseModifierFormat.parse(responsesToReturn, IRCMessage);
+                            });
+
                     })
                     .then(function(formattedResponses) {
                         Promise.each(formattedResponses, function(intentArray) {
@@ -197,8 +229,9 @@ var TennuRespond = {
 
         function edit(IRCMessage) {
 
-            var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+            var sargs = parseArgs(IRCMessage.args, responseAddEditArgs);
 
+            var executable = _.get(sargs, 'executable', false);
             var respondType = sargs._[1];
             var ID = sargs._[2];
             var text = sargs._.slice(3, sargs._.length).join(' ');
@@ -211,7 +244,7 @@ var TennuRespond = {
             return Promise.try(validators.validateType(respondType))
                 .then(function() {
                     return dbResponsePromise.then(function(respond) {
-                        return respond.edit(respondType, ID, text, chance);
+                        return respond.edit(respondType, ID, text, chance, executable);
                     }).then(function(modified) {
                         var methodName = 'formatUpdated' + _.capitalize(respondType);
                         return modelFormat[methodName](modified);
@@ -244,12 +277,15 @@ var TennuRespond = {
 
         function add(IRCMessage) {
 
-            var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+            var sargs = parseArgs(IRCMessage.args, responseAddEditArgs);
 
             var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig["default-chance"]));
+            var executable = _.get(sargs, 'executable', false);
             var stringStart = (IRCMessage.message.indexOf('add') + 4);
             var resTrigData = IRCMessage.message.slice(stringStart, IRCMessage.message.length)
-            var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').trim();
+            
+            // Remove -c and --e
+            var trimmedAndFilteredStr = resTrigData.replace(/([-]+c=*\d*\.*\d*){1}/i, '').replace(/(\-\-e\w*){1}/i, '').trim();
             var choppedText = splitSlash(trimmedAndFilteredStr);
 
             var cleanedTriggers = _(choppedText).map(_.trim).value();
@@ -267,7 +303,7 @@ var TennuRespond = {
             }
 
             return dbResponsePromise.then(function(respond) {
-                    return respond.add(_.dropRight(cleanedTriggers), _.last(cleanedTriggers), chance, IRCMessage.nickname);
+                    return respond.add(_.dropRight(cleanedTriggers), _.last(cleanedTriggers), chance, IRCMessage.nickname, executable);
                 })
                 .then(function(added) {
                     return modelFormat.formatAll([added]);
@@ -302,7 +338,7 @@ var TennuRespond = {
                 })
                 .then(function(responseID) {
 
-                    var sargs = parseArgs(IRCMessage.args, responseEditArgs);
+                    var sargs = parseArgs(IRCMessage.args, responseAddEditArgs);
 
                     var chance = clamp.prototype.saturate(_.get(sargs, 'chance', respondConfig["default-chance"]));
 

@@ -72,7 +72,7 @@ var responseAddTests = function(dbResponsePromise) {
                         respond.add(undefined, 'c', 0.03, 'test_user')
                             .then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.trigger.errors, {
+                                assert.equal(_.some(e.errors.trigger.errors, {
                                     rule: 'required'
                                 }), true);
                             }).then(function() {
@@ -85,7 +85,7 @@ var responseAddTests = function(dbResponsePromise) {
                         return respond.add(['', 'b'], 'c', 0.03, 'test_user')
                             .then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.trigger.errors, {
+                                assert.equal(_.some(e.errors.trigger.errors, {
                                     rule: 'required'
                                 }), true);
                             })
@@ -99,7 +99,7 @@ var responseAddTests = function(dbResponsePromise) {
                         return respond.add([null, 'b'], 'c', 0.03, 'test_user')
                             .then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.trigger.errors, {
+                                assert.equal(_.some(e.errors.trigger.errors, {
                                     rule: 'required'
                                 }), true);
                             })
@@ -113,7 +113,7 @@ var responseAddTests = function(dbResponsePromise) {
                         return respond.add([undefined, 'b'], 'c', 0.03, 'test_user')
                             .then(assert.fail)
                             .catch(function(e) {
-                                assert.equal(_.any(e.errors.trigger.errors, {
+                                assert.equal(_.some(e.errors.trigger.errors, {
                                     rule: 'required'
                                 }), true);
                             })
@@ -208,7 +208,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.response.errors, {
+                            assert.equal(_.some(e.errors.response.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -221,7 +221,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.response.errors, {
+                            assert.equal(_.some(e.errors.response.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -234,7 +234,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.response.errors, {
+                            assert.equal(_.some(e.errors.response.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -273,7 +273,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.chance.errors, {
+                            assert.equal(_.some(e.errors.chance.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -287,7 +287,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.chance.errors, {
+                            assert.equal(_.some(e.errors.chance.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -301,7 +301,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.chance.errors, {
+                            assert.equal(_.some(e.errors.chance.errors, {
                                 rule: 'required'
                             }), true);
                         }).then(function() {
@@ -315,7 +315,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.chance.errors, {
+                            assert.equal(_.some(e.errors.chance.errors, {
                                 rule: 'numeric'
                             }), true);
                         }).then(function() {
@@ -329,7 +329,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.chance.errors, {
+                            assert.equal(_.some(e.errors.chance.errors, {
                                 rule: 'numeric'
                             }), true);
                         }).then(function() {
@@ -367,7 +367,7 @@ var responseAddTests = function(dbResponsePromise) {
                         })
                         .then(assert.fail)
                         .catch(function(e) {
-                            assert.equal(_.any(e.errors.created_by.errors, {
+                            assert.equal(_.some(e.errors.created_by.errors, {
                                 rule: 'required'
                             }), true);
                             done();

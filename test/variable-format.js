@@ -65,7 +65,7 @@ function tests() {
             it('hello%act%world should convert hello to a say intent', function(done) {
                 intentModifierFormat.parse(["hello%act%world"], { channel: '#test', nickname: 'freddy' })
                     .then(function(result) {
-                        assert.equal(_.any(result[0], {
+                        assert.equal(_.some(result[0], {
                             intent: 'say',
                             target: '#test',
                             message: 'hello'

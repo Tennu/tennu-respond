@@ -33,6 +33,7 @@ var responseAddTests = function(dbResponsePromise) {
                         assert.equal(_.isEqual(_.omit(addTriggerResult, ['created_at', 'updated_at', 'triggers']), {
                             id: addTriggerResult.id,
                             response: addTriggerResult.response,
+                            executable: 0,
                             created_by: addTriggerResult.created_by
                         }), true);
 
