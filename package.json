@@ -32,7 +32,7 @@
     "mocha": "^2.3.3",
     "sqlite3": "^3.1.13",
     "tennu-admin": "^4.0.1",
-    "tennu-dbcore": "^1.0.6"
+    "tennu-dbcore": "^3.0.0"
   },
   "peerDependencies": {
     "tennu-dbcore": "^3"
