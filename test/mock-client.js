@@ -13,7 +13,7 @@ var clientConfiguration = {
     },
     "database": {
         "client": "sqlite3",
-        "debug": false,
+        "debug": true,
         "connection": {
             "filename": "./test/Respond.tests.sqlite"
         }
