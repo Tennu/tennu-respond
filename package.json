@@ -26,7 +26,7 @@
     "moment": "^2.10.6",
     "node-fetch": "^1.3.3",
     "split-fwd-slash": "^1.0.1",
-    "yargs": "^10.1.1"
+    "yargs": "^11.1.0"
   },
   "devDependencies": {
     "mocha": "^2.3.3",

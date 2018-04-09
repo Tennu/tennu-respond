@@ -1,32 +1,32 @@
 {
     "global": [
         "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
-        "{{!}}respond add [--executable] [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
-        "{{!}}respond addtriggers <Response_ID> [-c=.3] <text>",
-        "{{!}}respond edit <type> <type_ID> [--executable] [-c=.3] <new_text>",
+        "{{!}}respond add [--executable] [--c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
+        "{{!}}respond addtriggers <Response_ID> [--c=.3] <text>",
+        "{{!}}respond edit <type> <type_ID> [--executable] [--c=.3] <new_text>",
         "{{!}}respond remove <type> <type_ID>",
         "{{!}}respond list"
     ],
     "add": [
-        "{{!}}respond add [--executable] [-c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
+        "{{!}}respond add [--executable] [--c=.3] <trigger>[/<trigger>/<trigger>]/<response>",
         "Adds a trigger word(s) with a chance of responding with a phrase, the text after the LAST slash is always the response.",
         "Example: `!respond add ping/pong`",
         "would make the bot reply with `pong` to any text sent to the channel containing `ping`",
         "Modifiers: ",
-        "-c=chance : must be between 0.000 and 1.000",
+        "--c=chance : must be between 0.000 and 1.000",
         "--executable : responses are ran as child processes and stdout is returned"
     ],    
     "addtriggers": [
-        "{{!}}respond addtriggers <response_ID> [-c=deciaml] <trigger>/<trigger>/<trigger>",
+        "{{!}}respond addtriggers <response_ID> [--c=deciaml] <trigger>/<trigger>/<trigger>",
         "Adds a trigger word(s) with a chance of responding with a phrase to an existing response.",
         "Modifiers: ",
-        "-c=chance : must be between 0.000 and 1.000"
+        "--c=chance : must be between 0.000 and 1.000"
     ],
     "edit": [
-        "{{!}}respond edit <type> <type_ID> [--executable] [-c=deciaml] <new_text>",
+        "{{!}}respond edit <type> <type_ID> [--executable] [--c=deciaml] <new_text>",
         "Modifys the text and chance for the response or trigger.",
         "Modifiers: ",
-        "-c=chance : must be between 0.000 and 1.000",
+        "--c=chance : must be between 0.000 and 1.000",
         "--executable : responses are ran as child processes and stdout is returned"
     ],
     "remove": [
