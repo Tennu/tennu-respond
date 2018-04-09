@@ -4,13 +4,6 @@ var client = require('./mock-client');
 var dbcoreModule = null;
 var adminModule = null;
 
-var respondTests = require("./respond");
-var cacheTests = require("./cache");
-var respondCacheIntegrationTests = require("./respond-cache-integration");
-var pluginRespondIntegrationTests = require("./plugin-respond-integration");
-var responseNoAdmin = require("./respond-no-admin");
-var variableFormatTests = require('./variable-format');
-
 if (process.env.NODE_ENV === 'development') {
     
     console.log('NODE_ENV=development.\n');
@@ -36,6 +29,13 @@ var imports = {
         }
     }).exports
 };
+
+var respondTests = require("./respond");
+var cacheTests = require("./cache");
+var respondCacheIntegrationTests = require("./respond-cache-integration");
+var pluginRespondIntegrationTests = require("./plugin-respond-integration");
+var responseNoAdmin = require("./respond-no-admin");
+var variableFormatTests = require('./variable-format');
 
 var pluginToLoad = require('../plugin');
 client.pluginDefaultConfig = pluginToLoad.configDefaults;
