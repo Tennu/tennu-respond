@@ -5,7 +5,7 @@ var MockIRCMessageBuilder = require('./mock-irccommand-builder');
 var commandHandler = require("./command-handler");
 var isNotice = require('./is-notice');
 
-var responseNoAdminTests = function(dbResponsePromise, plugin, client, imports) {
+var responseNoAdminTests = function(plugin, client, imports) {
 
     var handle = commandHandler(plugin);
 
