@@ -1,5 +1,7 @@
 sudo: false
 language: node_js
+env:
+  - NODE_ENV=dev
 node_js:
   - "stable"
   - "4.2"
@@ -7,6 +9,5 @@ node_js:
   - "0.10"
 before_install: 
     - 'if [ "${TRAVIS_NODE_VERSION}" == "0.10" ]; then npm install -g npm@2 ; fi'
-    - npm install --only=dev
 notifications:
   irc: "irc.GameSurge.Net#tennudev"
