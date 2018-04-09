@@ -3,6 +3,8 @@ language: node_js
 node_js:
   - "stable"
 before_install:
+    - 'ls'
+    - 'ls test'
     - 'npm install --only=dev'
 notifications:
   irc: "irc.GameSurge.Net#tennudev"
