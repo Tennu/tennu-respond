@@ -18,7 +18,7 @@
     "bookshelf": "^0.10.0",
     "checkit": "^0.6.0",
     "child-process-promise": "^2.2.1",
-    "clamp": "git+https://github.com/LordWingZero/clamp.git",
+    "clamp": "git+https://github.com/VictorioBerra/clamp.git",
     "core-worker": "^0.3.5",
     "error": "^7.0.2",
     "irc-formatters": "^2.1.0",
