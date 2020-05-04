@@ -1,15 +1,15 @@
-var parseArgs = require("minimist");
-var format = require('util').format;
-var path = require('path');
-var Promise = require('bluebird');
-var clamp = require('clamp');
-var _ = require('lodash');
-var splitSlash = require('split-fwd-slash');
-var exec = require('child-process-promise').exec;
+const parseArgs = require("minimist");
+const format = require('util').format;
+const path = require('path');
+const Promise = require('bluebird');
+const clamp = require('clamp');
+const _ = require('lodash');
+const splitSlash = require('split-fwd-slash');
+const exec = require('child-process-promise').exec;
 
-var responseModifierFormat = require('./lib/response-modifier-format');
-var modelFormat = require('./lib/model-format');
-var validators = require('./lib/validators');
+const responseModifierFormat = require('./lib/response-modifier-format');
+const modelFormat = require('./lib/model-format');
+const validators = require('./lib/validators');
 
 // Will not change if 2 instances of tennu launched
 const helps = require('./help');
@@ -35,7 +35,6 @@ var TennuRespond = {
         "respond": {
             "default-chance": 0.3,
             "no-admin": false,
-            "hastebin-server": "https://hastebin.com/",
             "denied-response": {
                 "intent": "notice",
                 "query": true,
@@ -59,7 +58,7 @@ var TennuRespond = {
 
         var respondConfig = client.config("respond");
 
-        var haste = require('./lib/haste')(respondConfig["hastebin-server"]);
+        var haste = require('./lib/pastebin')(respondConfig["pastebin-apikey"]);
 
         /**
          * Handles parsing subcommands out of !respond.
@@ -172,14 +171,14 @@ var TennuRespond = {
                             var formated = modelFormat.formatAll(allResponsesAndTriggers);
                             return haste.postText(header + formated);
                         })
+                        .then(function(link) {
+                            return _getNotice(link);
+                        })
                         .catch(function(err) {
-                            client._logger.error('Tennu-respond: An error has occured when attempting to haste.');
+                            client._logger.error('Tennu-respond: An error has occured when attempting to pastebin.');
                             client._logger.error(err);
                             return _getNotice(err)
                         })
-                        .then(function(hasteKey) {
-                            return _getNotice(respondConfig["hastebin-server"] + hasteKey);
-                        });
                 });
             });
         }

@@ -58,7 +58,7 @@ var responseNoAdminTests = function(plugin, client, imports) {
 
             });
 
-            it('Should allow access to an admin.', function(done) {
+            it('Should allow access to an admin.', function() {
 
                 var IRCMessage = MockIRCMessageBuilder('!respond list');
 
@@ -69,10 +69,7 @@ var responseNoAdminTests = function(plugin, client, imports) {
                     })
                     .then(function(pluginResponse) {
                         isNotice(pluginResponse);
-                        assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true, 'Hastebin might be down.');
-                    })
-                    .then(function() {
-                        done();
+                        assert.equal(pluginResponse.message, 'Provide a Pastebin API Key in your configuration to enable this feature.');
                     });
 
             });
@@ -85,7 +82,7 @@ var responseNoAdminTests = function(plugin, client, imports) {
                 client.clientConfiguration.respond["no-admin"] = true;
             });
 
-            it('Should allow access to a non-admin.', function(done) {
+            it('Should allow access to a non-admin.', function() {
 
                 var IRCMessage = MockIRCMessageBuilder('!respond list');
 
@@ -96,10 +93,7 @@ var responseNoAdminTests = function(plugin, client, imports) {
                     })
                     .then(function(pluginResponse) {
                         isNotice(pluginResponse);
-                        assert.equal((pluginResponse.message.indexOf('https://hastebin.com/') > -1), true);
-                    })
-                    .then(function() {
-                        done();
+                        assert.equal(pluginResponse.message, 'Provide a Pastebin API Key in your configuration to enable this feature.');
                     });
 
             });

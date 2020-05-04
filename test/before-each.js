@@ -1,5 +1,5 @@
 function be(dbResponsePromise) {
-    return function(done) {
+    return function() {
         this.timeout(5000);
         return dbResponsePromise.then(function(respond) {
 
@@ -64,9 +64,6 @@ function be(dbResponsePromise) {
                                 created_by: 'TestUser4'
                             });
                         });
-                })
-                .then(function(test) {
-                    done();
                 });
         });
     };

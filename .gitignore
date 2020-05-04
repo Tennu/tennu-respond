@@ -35,3 +35,4 @@ node_modules
 
 # Dont include data
 *.sqlite
+*.sqlite-journal
