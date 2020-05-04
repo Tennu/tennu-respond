@@ -1,6 +1,6 @@
 {
   "name": "tennu-respond",
-  "version": "5.0.3",
+  "version": "6.0.0",
   "description": "Maintains trigger words that will fire pre-determined responses. Can be set to only respond occasionally.",
   "main": "plugin.js",
   "repository": {
